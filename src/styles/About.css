@@ -1,0 +1,38 @@
+.header {
+  display: flex;
+  flex-direction: column; /* stacks divs vertically */
+  justify-content: center; /* centers content horizontally */
+  align-items: center; /* centers content vertically */
+  font-size: 30px;
+  height: 100vh; /* as tall as the page */
+  color: var(--color-medium);
+  z-index: 1000; /* above the grid */
+}
+
+.title {
+  text-align: left;
+  font-size: 60px;
+  margin-bottom: 20px;
+}
+
+.info {
+  z-index: 1000; /* above the grid */
+  margin-left: 300px;
+  margin-right: 300px;
+}
+
+.home {
+  margin: 100px;
+  background-color: var(--color-medium);
+  color: var(--color-lighter);
+  z-index: 1000;
+  padding-right: 10px;
+  padding-left: 10px;
+  border-radius: 5px;
+  transition: 0.1s ease-in-out;
+}
+
+.home:hover {
+  background-color: var(--color-light);
+  transition: 0.1s ease-in-out;
+}

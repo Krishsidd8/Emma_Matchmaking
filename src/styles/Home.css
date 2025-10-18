@@ -1,0 +1,52 @@
+/*CSS modules */
+.appheader {
+  display: flex;
+  flex-direction: column; /* stacks divs vertically */
+  justify-content: center; /* centers content horizontally */
+  align-items: center; /* centers content vertically */
+  font-size: 50px;
+  height: 100vh; /* as tall as the page */
+  color: var(--color-lighter);
+  z-index: 1000; /* above the grid */
+}
+
+.timer {
+  z-index: 1000;
+  color: var(--color-medium)
+}
+
+.until {
+  min-height: 200px;
+  z-index: 1000;
+  color: var(--color-medium);
+  margin-top: 30px;
+}
+
+.find {
+  background-color: var(--color-medium);
+  z-index: 1000;
+  padding-right: 10px;
+  padding-left: 10px;
+  border-radius: 5px;
+  transition: 0.1s ease-in-out;
+}
+
+.find:hover {
+  background-color: var(--color-light);
+  transition: 0.1s ease-in-out;
+}
+
+.about {
+  margin: 100px;
+  background-color: var(--color-medium);
+  z-index: 1000;
+  padding-right: 10px;
+  padding-left: 10px;
+  border-radius: 5px;
+  transition: 0.1s ease-in-out;
+}
+
+.about:hover {
+  background-color: var(--color-light);
+  transition: 0.1s ease-in-out;
+}

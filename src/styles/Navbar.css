@@ -1,0 +1,30 @@
+.navbar {
+  background-color: var(--color-medium);
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  padding: 0.5rem 1rem;
+  position: relative;
+  z-index: 10; /* make sure it stays above backgrounds */
+}
+
+/* each link */
+.nav-link {
+  margin: 0 10px;
+  font-size: 20px;
+  text-decoration: none;
+  color: black;
+  font-family: "Poppins", sans-serif;
+  transition: color 0.3s ease, transform 0.3s ease;
+}
+
+.nav-link:hover {
+  color: white;
+  transform: scale(1.05);
+}
+
+/* optional: make active link stand out */
+.nav-link.active {
+  font-weight: bold;
+  text-decoration: underline;
+}

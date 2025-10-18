@@ -1,0 +1,21 @@
+:root {
+  --color-lighter: #ffd9daff; /* misty-rose */
+  --color-light: #ea638cff; /* blush */
+  --color-medium: #89023eff; /* murrey */
+  --color-dark: #30343fff; /* gunmetal */
+  --color-darker: #1b2021ff; /* eerie-black */
+}
+/*
+:root {
+  --color-lighter: #f0ebc1; light yellow
+  --color-light: #ffcdcc; light orange
+  --color-medium: #c5e591; light green
+  --color-dark: #c5d9eb; light blue
+  --color-darker: #d5d3ff; dark blue
+  --color-darkest: #FF48AB; magenta 
+}
+*/
+
+.App {
+  font-family: "Regular";
+}
