@@ -1,7 +1,7 @@
 {
   "name": "emma_matching",
   "version": "0.1.0",
-  "homepage": "https://ojasprabhune.github.io/emma-matchmaking",
+  "homepage": "https://emma-matchmaking",
   "private": true,
   "dependencies": {
     "@fortawesome/fontawesome-free": "^7.1.0",
