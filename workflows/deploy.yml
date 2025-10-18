@@ -1,0 +1,27 @@
+steps:
+  - name: Checkout Repository
+    uses: actions/checkout@v4
+    
+  - name: Set up Node.js
+    uses: actions/setup-node@v4
+    with:
+      node-version: '20' # Use a stable Node.js version
+      
+  - name: Install Dependencies
+    run: npm install
+    
+  # CRITICAL: This step uses the "homepage" setting from package.json
+  # and creates the production-ready static files in the 'build' directory.
+  - name: Build Project
+    run: npm run build
+    
+  # Deploys the content of the 'build' folder to the gh-pages branch.
+  # GitHub Pages is configured to serve from this branch.
+  - name: Deploy to GitHub Pages
+    uses: peaceiris/actions-gh-pages@v4
+    with:
+      github_token: ${{ secrets.GITHUB_TOKEN }}
+      # This is the folder that contains your index.html and static assets
+      publish_dir: ./build 
+      # Deploy to the gh-pages branch (standard practice for actions)
+      publish_branch: gh-pages
