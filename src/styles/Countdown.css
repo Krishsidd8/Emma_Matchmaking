@@ -9,6 +9,64 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
+  gap: 30px; 
+  padding: 20px;
+}
+
+.timebox {
+  display: flex;
+  gap: 20px; 
+  width: 100%;
+  justify-content: space-around;
+}
+
+.time {
+  text-align: center;
+}
+
+.num {
+  font-weight: 100;
+  font-size: 50px; 
+  line-height: 1;
+}
+
+.p {
+  font-size: 18px; 
+}
+
+
+@media (min-width: 768px) {
+  .hero {
+    gap: 45px;
+  }
+  
+  .timebox {
+    gap: 90px;
+    width: auto;
+  }
+  
+  .num {
+    font-size: 120px;
+  }
+  
+  .p {
+    font-size: 40px;
+  }
+}
+
+
+/*
+* {
+  padding: 0;
+  margin: 0;
+  box-sizing: border-box;
+}
+
+.hero {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
   gap: 45px;
 }
 
@@ -29,3 +87,4 @@
 .p {
   font-size: 40px;
 }
+  */
