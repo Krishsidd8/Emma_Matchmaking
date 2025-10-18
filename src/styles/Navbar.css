@@ -1,30 +1,99 @@
 .navbar {
-  background-color: var(--color-medium);
-  display: flex;
-  justify-content: flex-end;
-  align-items: center;
-  padding: 0.5rem 1rem;
-  position: relative;
-  z-index: 10; /* make sure it stays above backgrounds */
+  padding: 0.75rem 2rem;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  background: var(--color-medium);
+  backdrop-filter: blur(10px);
+  border-radius: 0 0 1rem 1rem;
+  /* use grid-friendly container to avoid overlap */
 }
 
-/* each link */
+/* grid: left (1fr) | center (auto) | right (1fr) */
+.navbar-inner {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  width: 100%;
+  gap: 1rem;
+}
+
+/* Center title — no absolute positioning anymore */
+.logo {
+  grid-column: 2;              /* place in center column */
+  justify-self: center;        /* center horizontally in that column */
+  font-size: 1.6rem;
+  color: var(--color-darkest);
+  font-weight: 600;
+  text-align: center;
+  white-space: nowrap;
+}
+
+/* Right side nav links */
+.pages {
+  grid-column: 3;              /* right column */
+  justify-self: end;           /* push links to the far right */
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+}
+
+/* If you want a small left-side element later (e.g., logo icon), it goes in column 1 */
+.left-slot {
+  grid-column: 1;
+  justify-self: start;
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+/* Links */
 .nav-link {
-  margin: 0 10px;
-  font-size: 20px;
-  text-decoration: none;
-  color: black;
+  position: relative;
+  font-size: 1.1rem;
   font-family: "Poppins", sans-serif;
-  transition: color 0.3s ease, transform 0.3s ease;
+  text-decoration: none;
+  color: #444;
+  padding: 0.4rem 0.8rem;
+  border-radius: 0.75rem;
+  transition: all 0.25s ease;
 }
 
 .nav-link:hover {
-  color: white;
-  transform: scale(1.05);
+  background-color: rgba(255, 240, 220, 0.8);
+  color: #ff7b7b;
+  transform: translateY(-2px);
+  box-shadow: 0 2px 8px rgba(255, 180, 180, 0.3);
 }
 
-/* optional: make active link stand out */
 .nav-link.active {
-  font-weight: bold;
-  text-decoration: underline;
+  font-weight: 600;
+  background-color: rgba(255, 220, 200, 0.8);
+  color: #ff5f5f;
+  box-shadow: inset 0 0 8px rgba(255, 180, 180, 0.4);
+}
+
+/* Responsive: stack vertically on narrow screens */
+@media (max-width: 700px) {
+  .navbar-inner {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .left-slot,
+  .pages {
+    justify-self: center;
+    grid-column: auto;
+  }
+
+  .pages {
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+
+  .logo {
+    grid-column: auto;
+  }
 }

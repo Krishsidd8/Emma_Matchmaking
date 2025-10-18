@@ -9,82 +9,67 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 30px; 
-  padding: 20px;
+  gap: 1.5rem;
+  padding: 1.25rem;
+  z-index: 10;
 }
 
 .timebox {
   display: flex;
-  gap: 20px; 
+  gap: 0.5rem;
+  justify-content: center;
   width: 100%;
-  justify-content: space-around;
+  max-width: 28.125rem;
 }
 
 .time {
+  /* New styles for the rounded rectangle box */
   text-align: center;
+  border: 0.125rem solid var(--color-darker); /* 2px -> 0.125rem */
+  border-radius: 0.75rem; /* 12px -> 0.75rem */
+  padding: 0.5rem 0.75rem; /* 8px 12px -> 0.5rem 0.75rem */
+  flex-grow: 1; /* Allows boxes to share width equally */
+  background-color: var(--color-light); 
+  box-shadow: 0 0.25rem 0.375rem rgba(0, 0, 0, 0.1); /* 4px 6px -> 0.25rem 0.375rem */
 }
 
+/* Mobile-first sizes (smaller timer) */
 .num {
-  font-weight: 100;
-  font-size: 50px; 
-  line-height: 1;
+  font-weight: 700; 
+  font-size: 2rem;
+  line-height: 1.2;
+  color: var(--color-medium); 
 }
 
 .p {
-  font-size: 18px; 
+  font-size: 0.875rem; /* 14px -> 0.875rem */
+  line-height: 1;
+  text-transform: uppercase;
+  letter-spacing: 0.03125rem; /* 0.5px -> 0.03125rem */
+  color: var(--color-darker);
 }
 
 
+/* Tablet and Desktop Styles (Larger Timer) */
 @media (min-width: 768px) {
   .hero {
-    gap: 45px;
+    gap: 1rem;
   }
   
   .timebox {
-    gap: 90px;
-    width: auto;
+    gap: 2.5rem;
+    max-width: 50rem;
+  }
+  
+  .time {
+    padding: 1.25rem 1.875rem;
   }
   
   .num {
-    font-size: 120px;
+    font-size: 2rem;
   }
   
   .p {
-    font-size: 40px;
+    font-size: 1rem;
   }
 }
-
-
-/*
-* {
-  padding: 0;
-  margin: 0;
-  box-sizing: border-box;
-}
-
-.hero {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 45px;
-}
-
-.timebox {
-  display: flex;
-  gap: 90px;
-}
-
-.time {
-  text-align: center;
-}
-
-.num {
-  font-weight: 100;
-  font-size: 120px;
-}
-
-.p {
-  font-size: 40px;
-}
-  */

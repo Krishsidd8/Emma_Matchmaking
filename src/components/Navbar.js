@@ -1,17 +1,40 @@
-// website can have text like "About the play" which the user
-// can click to go to a page or link (i.e., /about)
-import { Link } from "react-router"; // link wrapper to enable navigation with client-side routing
-
-import "../styles/Navbar.css"
+import { Link, useLocation } from "react-router-dom";
+import "../styles/Navbar.css";
 
 export function Navbar() {
+  const location = useLocation();
+
   return (
-    <div className="navbar">
-      <Link to="/" className="nav-link">Home</Link>
-      <Link to="/about" className="nav-link">About the play</Link>
-      <Link to="/matchmaking" className="nav-link">Find a match!</Link>
-      <Link to="/countdown" className="nav-link">Countdown</Link>
-    </div>
+    <nav className="navbar">
+      <div className="navbar-inner">
+        {/* optional left slot (keeps grid balanced). You can remove it or add an icon later */}
+        <div className="left-slot"></div>
+
+        <div className="logo">
+          <Link
+            to="/home"
+            className={`nav-link ${location.pathname === "/home" ? "active" : ""}`}
+          >
+            Emma's Matchmaking
+          </Link>
+        </div>
+
+        <div className="pages">
+          <Link
+            to="/about"
+            className={`nav-link ${location.pathname === "/about" ? "active" : ""}`}
+          >
+            About the Play
+          </Link>
+          <Link
+            to="/matchmaking"
+            className={`nav-link ${location.pathname === "/matchmaking" ? "active" : ""}`}
+          >
+            Matchmaking
+          </Link>
+        </div>
+      </div>
+    </nav>
   );
 }
 

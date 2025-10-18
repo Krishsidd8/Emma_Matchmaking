@@ -22,7 +22,7 @@ function App() {
       {/* Router parent element for routes group */}
       <Router>
         <Routes>
-          <Route path="/" exact element={<Home />} />
+          <Route path="/home" exact element={<Home />} />
           <Route path="/matchmaking" exact element={<Matchmaking />} />
           <Route path="/about" exact element={<About />} />
         </Routes>

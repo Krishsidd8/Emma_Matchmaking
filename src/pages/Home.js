@@ -1,5 +1,5 @@
 import "../styles/Home.css";
-
+import Navbar from "../components/Navbar";
 import InteractiveGrid from "../animation/InteractiveGrid";
 import CountdownTimer from "../components/Countdown";
 import { Link } from "react-router-dom";
@@ -8,18 +8,22 @@ function Home() {
   return (
     <div className="appheader">
       <InteractiveGrid />
-      <div className="timer">
-        <CountdownTimer />
+      
+      <nav className="navbar">
+        <Navbar />
+      </nav>
+
+      <div className="content-card">
+        <div className="timer">
+          <CountdownTimer />
+        </div>
+        <Link className="find" to="/matchmaking">
+          Find a Match!
+        </Link>
+        <Link className="about" to="/about">
+          About the Play
+        </Link>
       </div>
-      <div className="until">
-        <p>until pairings release!</p>
-      </div>
-      <Link className="find" to="/matchmaking">
-        find a match
-      </Link>
-      <Link className="about" to="/about">
-      about emma
-      </Link>
     </div>
   );
 }
