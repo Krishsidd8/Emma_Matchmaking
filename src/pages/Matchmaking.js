@@ -5,69 +5,106 @@ import InteractiveGrid from "../animation/InteractiveGrid";
 import Countdown from "../components/Countdown";
 import { Link } from "react-router-dom";
 
+// at top of file, add backend URL
+const API_BASE = process.env.REACT_APP_API_BASE || "http://localhost:5000/api";
 
 function Matchmaking() {
-  const [user, setUser] = useState(() => JSON.parse(localStorage.getItem("emma_user")) || null);
-  const [step, setStep] = useState(user ? "waiting" : "signup");
-  const [form, setForm] = useState({ firstName: "", lastName: "", email: "", grade: "" });
-  const [matchType, setMatchType] = useState("");
-  const [answers, setAnswers] = useState({});
+  const [user, setUser] = useState(() => {
+    // keep local copy for quick UI, but authoritative data comes from backend
+    const saved = JSON.parse(localStorage.getItem("emma_user")) || null;
+    return saved;
+  });
 
-  useEffect(() => {
-    if (user) localStorage.setItem("emma_user", JSON.stringify(user));
-  }, [user]);
+  // ... other state
 
-  // Handlers
-  const handleSignup = () => {
-    if(!form.firstName || !form.lastName || !form.email || !form.grade) {
-      alert('Complete all fields');
+  // call backend to create/get user
+  const handleSignup = async () => {
+    if (!form.firstName || !form.lastName || !form.email || !form.grade) {
+      alert("Complete all fields");
+      return;
+    }
+    if (!form.email.endsWith("@students.esuhsd.org")) {
+      alert("Use a valid student email");
       return;
     }
 
-    if (!form.email.endsWith("@students.esuhsd.org")) return alert("Use a valid student email");
+    try {
+      const resp = await fetch(`${API_BASE}/signup`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          firstName: form.firstName,
+          lastName: form.lastName,
+          email: form.email,
+          grade: form.grade
+        })
+      });
+      const data = await resp.json();
+      if (!data.ok) {
+        alert(data.error || "Signup failed");
+        return;
+      }
+      // store a local cache for quick refresh; authoritative record lives on server
+      const newUser = { email: form.email, firstName: form.firstName, lastName: form.lastName, grade: form.grade, id: data.user_id };
+      localStorage.setItem("emma_user", JSON.stringify(newUser));
+      setUser(newUser);
+      setStep("matchType");
+    } catch (err) {
+      console.error(err);
+      alert("Network error during signup");
+    }
+  };
 
-    const stored = localStorage.getItem("emma_user");
-    if (stored && JSON.parse(stored).email === form.email) {
-      setUser(JSON.parse(stored));
+  // submit answers to backend
+  const handleSubmit = async () => {
+    if (!matchType) {
+      alert("Select a match type first");
+      return;
+    }
+    const unanswered = QUESTIONS.some((q) => !answers[q.id]);
+    if (unanswered) {
+      alert("Complete all questions");
+      return;
+    }
+
+    if (!user || !user.email) {
+      alert("Missing user email — signup first");
+      return;
+    }
+
+    const payload = {
+      email: user.email,
+      matchType,
+      answers: answers, // object with keys like 1: "A"
+    };
+
+    try {
+      const resp = await fetch(`${API_BASE}/submit`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload)
+      });
+      const data = await resp.json();
+      if (!data.ok) {
+        alert(data.error || "Submission failed");
+        return;
+      }
+      // mark local state as submitted
+      const newUser = {
+        ...user,
+        matchType,
+        answers,
+        submittedAt: new Date().toISOString(),
+        fullName: `${form.firstName} ${form.lastName}`
+      };
+      setUser(newUser);
+      localStorage.setItem("emma_user", JSON.stringify(newUser));
       setStep("waiting");
-      return;
+    } catch (err) {
+      console.error(err);
+      alert("Network error during submit");
     }
-
-    setStep("matchType");
   };
-
-  const handleSelectMatchType = (type) => {
-    setMatchType(type);
-    setStep("questions");
-  };
-
-  const handleSubmit = () => {
-  // Ensure match type selected
-  if (!matchType) {
-    alert("Select a match type first");
-    return;
-  }
-
-  // Ensure all 25 questions answered
-  const unanswered = QUESTIONS.some(q => !answers[q.id]);
-  if (unanswered) {
-    alert("Complete all questions");
-    return;
-  }
-
-  // Save user
-  const newUser = {
-    ...form,
-    matchType,
-    answers,
-    submittedAt: new Date().toISOString(),
-    fullName: `${form.firstName} ${form.lastName}`
-  };
-
-  setUser(newUser);
-  localStorage.setItem("emma_user", JSON.stringify(newUser));
-  setStep("waiting");
-};
 
 
   // Render Sections
@@ -167,6 +204,19 @@ function Matchmaking() {
   </div>
 );
 
+async function fetchMyMatches() {
+  if (!user?.email) return;
+  const resp = await fetch(`${API_BASE}/my-match?email=${encodeURIComponent(user.email)}`);
+  const data = await resp.json();
+  if (data.ok) {
+    // data.match will contain friend/date/group matches involving this user
+    return data.match;
+  } else {
+    console.warn("no match or error", data);
+    return null;
+  }
+}
+
   const renderWaiting = () => {
     return (
       <div className="waiting">
@@ -178,17 +228,11 @@ function Matchmaking() {
       </div>
     );
   };
-
+  
   const renderReveal = () => {
     if (!user) return <div className="reveal"><h2>Matches Revealed</h2><p>No submission found.</p></div>;
     return (
-      <div className="reveal">
-        <h2>Matches Revealed</h2>
-        <div><strong>Name:</strong> {user.name}</div>
-        <div><strong>Grade:</strong> {user.grade}</div>
-        <div><strong>Match Type:</strong> {user.matchType}</div>
-        <div><strong>Answers:</strong><pre>{JSON.stringify(user.answers)}</pre></div>
-      </div>
+      fetchMyMatches()
     );
   };
 
