@@ -61,7 +61,7 @@
 }
 
 .find {
-  background-color: var(--color-medium);
+  background-color: var(--color-darkest);
   z-index: 1000;
   color: white;
 }
@@ -73,7 +73,7 @@
 
 .about {
   margin-top: 1rem; 
-  background-color: var(--color-medium);
+  background-color: var(--color-darkest);
   z-index: 1000;
   color: white;
 }

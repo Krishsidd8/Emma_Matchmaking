@@ -10,15 +10,16 @@ export function Navbar() {
         <div className="left-slot"></div>
 
         <div className="logo">
+          <h1>Emma's Matchmaking</h1>
+        </div>
+
+        <div className="pages">
           <Link
             to="/home"
             className={`nav-link ${location.pathname === "/home" ? "active" : ""}`}
           >
-            Emma's Matchmaking
+            Home
           </Link>
-        </div>
-
-        <div className="pages">
           <Link
             to="/about"
             className={`nav-link ${location.pathname === "/about" ? "active" : ""}`}
