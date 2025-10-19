@@ -17,7 +17,8 @@ try:
 except Exception:
     AgglomerativeClustering = None
 
-DB_PATH = os.environ.get("EMMA_DB", "/app/data/emma_database.db")
+os.makedirs("/tmp/db", exist_ok=True)
+DB_PATH = "/tmp/db/emma.db"
 
 app = Flask(__name__)
 CORS(app)  # allow your local React dev server (adjust origins in prod)
@@ -42,20 +43,14 @@ def close_connection(exception):
 
 def init_db():
     with sqlite3.connect(DB_PATH) as db:
-        cur = db.cursor()
-        # Users: basic profile + meta
-        cur.execute("""
-            CREATE TABLE IF NOT EXISTS users (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                email TEXT UNIQUE NOT NULL,
-                first_name TEXT,
-                last_name TEXT,
-                full_name TEXT,
-                grade TEXT,
-                match_type TEXT,
-                submitted_at TEXT,
-                metadata TEXT
-            );
+        db.execute("""
+        CREATE TABLE IF NOT EXISTS users (
+            id INTEGER PRIMARY KEY,
+            firstName TEXT,
+            lastName TEXT,
+            email TEXT UNIQUE,
+            grade TEXT
+        )
         """)
         # Answers: each row = (user_id, qid, answer)
         cur.execute("""
