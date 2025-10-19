@@ -20,6 +20,7 @@ except Exception:
 os.makedirs("/tmp/db", exist_ok=True)
 DB_PATH = "/tmp/db/emma.db"
 
+
 app = Flask(__name__)
 CORS(app)  # allow your local React dev server (adjust origins in prod)
 
@@ -43,16 +44,23 @@ def close_connection(exception):
 
 def init_db():
     with sqlite3.connect(DB_PATH) as db:
-        db.execute("""
-        CREATE TABLE IF NOT EXISTS users (
-            id INTEGER PRIMARY KEY,
-            firstName TEXT,
-            lastName TEXT,
-            email TEXT UNIQUE,
-            grade TEXT
-        )
+        cur = db.cursor()
+
+        # Users table
+        cur.execute("""
+            CREATE TABLE IF NOT EXISTS users (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                firstName TEXT,
+                lastName TEXT,
+                email TEXT UNIQUE,
+                grade TEXT,
+                submittedAt TEXT,
+                matchType TEXT,
+                answers TEXT
+            );
         """)
-        # Answers: each row = (user_id, qid, answer)
+
+        # Answers table
         cur.execute("""
             CREATE TABLE IF NOT EXISTS answers (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -62,7 +70,8 @@ def init_db():
                 FOREIGN KEY (user_id) REFERENCES users(id)
             );
         """)
-        # Matches: store pairings / groups (json payload)
+
+        # Matches table
         cur.execute("""
             CREATE TABLE IF NOT EXISTS matches (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -71,8 +80,10 @@ def init_db():
                 payload TEXT
             );
         """)
+
         db.commit()
     print(f"Initialized DB at {DB_PATH}")
+
 
 
 init_db()
