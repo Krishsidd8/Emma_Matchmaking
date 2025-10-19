@@ -50,12 +50,12 @@ def init_db():
         cur.execute("""
             CREATE TABLE IF NOT EXISTS users (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
-                firstName TEXT,
-                lastName TEXT,
+                first_name TEXT,
+                last_name TEXT,
                 email TEXT UNIQUE,
                 grade TEXT,
-                submittedAt TEXT,
-                matchType TEXT,
+                submitted_at TEXT,
+                match_type TEXT,
                 answers TEXT
             );
         """)
