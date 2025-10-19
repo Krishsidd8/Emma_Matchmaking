@@ -3,41 +3,46 @@
   min-height: 100vh;
   overflow-x: hidden;
 }
-
-/* Interactive background layer */
-.about-container > canvas,
-.about-container > div {
-  position: absolute;
-  inset: 0;
+.about-container > canvas {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
   z-index: 0;
   pointer-events: none;
 }
 
-/* One large translucent glass box */
 .about-big-box {
   position: relative;
   z-index: 10;
-  max-width: 1200px;
-  margin: 6rem auto;
-  padding: 4rem 3rem;
-  background: rgba(255, 255, 255, 0.2);
-  backdrop-filter: blur(15px);
-  border: 1px solid rgba(255, 255, 255, 0.3);
+  max-width: 1300px;
+  margin: 4rem auto;
+  padding: 3rem 6rem;
   border-radius: 25px;
-  box-shadow: 0 8px 40px rgba(0, 0, 0, 0.15);
   display: flex;
   flex-direction: column;
-  gap: 3rem;
+  gap: 4rem;
+  pointer-events: auto;
 }
+
 
 /* Individual horizontal sections inside the box */
 .about-section {
+  z-index: 10;
+  max-width: 100%;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 2rem;
-  padding: 1rem 0;
+  gap: 3rem;
   border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+  margin: auto 3rem;
+  padding: 3rem 4rem;
+  border-radius: 25px;
+  background-color: rgba(255, 255, 255, 0.2);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  box-shadow: 0 0.5rem 1.5rem rgba(0, 0, 0, 0.1);
 }
 
 .about-section:last-child {
@@ -56,18 +61,21 @@
   font-weight: 700;
   color: #2f1c1c;
   margin-bottom: 1rem;
+  letter-spacing: 0.5px;
+  text-shadow: 0 2px 8px rgba(255, 180, 180, 0.3);
 }
 
 .about-text p {
   font-family: "Inter", sans-serif;
-  font-size: 1.1rem;
-  line-height: 1.8;
+  font-size: 1.15rem;
+  line-height: 1.9;
   color: #3b2d2d;
+  max-width: 600px;
 }
 
-/* Image styling */
+/* Image styling — larger and more aesthetic */
 .about-image {
-  flex: 1;
+  flex: 1.0;
   display: flex;
   justify-content: center;
   align-items: center;
@@ -75,28 +83,15 @@
 
 .about-image img {
   width: 100%;
-  max-width: 350px;
-  border-radius: 12px;
+  max-width: 300px;
+  border-radius: 16px;
   object-fit: cover;
+  transition: transform 0.4s ease, box-shadow 0.4s ease;
 }
 
-/* Back home button */
-.back-home {
-  display: inline-block;
-  margin-top: 1.5rem;
-  background-color: rgba(255, 190, 190, 0.8);
-  color: #fff;
-  text-decoration: none;
-  padding: 0.6rem 1.4rem;
-  border-radius: 10px;
-  font-weight: 500;
-  transition: all 0.3s ease;
-}
-
-.back-home:hover {
-  background-color: rgba(255, 140, 140, 0.95);
-  transform: translateY(-2px);
-  box-shadow: 0 4px 15px rgba(255, 150, 150, 0.4);
+.about-image img:hover {
+  transform: scale(1.05);
+  box-shadow: 0 12px 35px rgba(0, 0, 0, 0.25);
 }
 
 /* Responsive design */
@@ -111,11 +106,124 @@
   }
 
   .about-text h1 {
-    font-size: 2rem;
+    font-size: 2.2rem;
   }
 
   .about-image img {
     margin-top: 1.5rem;
-    max-width: 280px;
+    max-width: 320px; /* still looks clean on mobile */
+  }
+}
+
+/* Carousel container */
+.carousel {
+  position: relative;
+  height: 85vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  overflow: hidden;
+}
+
+/* Fade animation */
+.fade-in {
+  animation: fadeSlide 3s ease forwards;
+}
+
+@keyframes fadeSlide {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Arrows */
+
+.arrow-icon {
+  width: 36px;
+  height: 36px;
+  opacity: 0.85;
+  transition: transform 0.2s ease, opacity 0.2s ease;
+}
+
+.arrow-icon:hover {
+  transform: scale(1.1);
+  opacity: 1;
+}
+
+.arrow {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  background: rgba(255, 255, 255, 0.3);
+  backdrop-filter: blur(8px);
+  border: none;
+  color: #2f1c1c;
+  cursor: pointer;
+  border-radius: 50%;
+  padding: 0.5rem;
+  transition: all 0.3s ease;
+  z-index: 20;
+}
+
+.arrow:hover {
+  background: rgba(255, 200, 200, 0.7);
+  transform: translateY(-50%) scale(1.1);
+}
+
+.arrow.left {
+  left: 3%;
+}
+
+.arrow.right {
+  right: 3%;
+}
+
+/* Dots */
+.carousel-dots {
+  position: absolute;
+  bottom: 30px;
+  display: flex;
+  gap: 0.7rem;
+}
+
+.dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background-color: rgba(255, 255, 255, 0.5);
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.dot:hover {
+  background-color: rgba(255, 160, 160, 0.8);
+}
+
+.dot.active {
+  background-color: #ff9e9e;
+  transform: scale(1.3);
+}
+
+/* Mobile adjustments */
+@media (max-width: 900px) {
+  .arrow {
+    padding: 0.4rem;
+  }
+
+  .arrow.left {
+    left: 1rem;
+  }
+
+  .arrow.right {
+    right: 1rem;
+  }
+
+  .carousel-dots {
+    bottom: 20px;
   }
 }

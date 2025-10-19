@@ -7,7 +7,6 @@ export function Navbar() {
   return (
     <nav className="navbar">
       <div className="navbar-inner">
-        {/* optional left slot (keeps grid balanced). You can remove it or add an icon later */}
         <div className="left-slot"></div>
 
         <div className="logo">

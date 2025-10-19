@@ -1,7 +1,6 @@
 import "../styles/Home.css";
 import Navbar from "../components/Navbar";
 import InteractiveGrid from "../animation/InteractiveGrid";
-import CountdownTimer from "../components/Countdown";
 import { Link } from "react-router-dom";
 
 function Home() {
@@ -14,14 +13,13 @@ function Home() {
       </nav>
 
       <div className="content-card">
-        <div className="timer">
-          <CountdownTimer />
-        </div>
+        <h1>Every Play Needs Its Perfect Cast</h1>
+        <p>Find your Friend, Group, or Date for the Show!</p>
         <Link className="find" to="/matchmaking">
           Find a Match!
         </Link>
         <Link className="about" to="/about">
-          About the Play
+          Learn About the Play
         </Link>
       </div>
     </div>
