@@ -4,7 +4,7 @@ import Navbar from "../components/Navbar";
 import InteractiveGrid from "../animation/InteractiveGrid";
 import Countdown from "../components/Countdown";
 
-const API_BASE = process.env.REACT_APP_API_BASE || "http://localhost:5000/api";
+const API_BASE = process.env.REACT_APP_API_BASE || "https://emmamatchmaking-production.up.railway.app/api";
 
 function Matchmaking() {
   // --- STATE VARIABLES ---
