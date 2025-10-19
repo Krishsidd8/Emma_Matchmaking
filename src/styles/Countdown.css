@@ -25,7 +25,7 @@
 .time {
   /* New styles for the rounded rectangle box */
   text-align: center;
-  border: 0.125rem solid var(--color-darker); /* 2px -> 0.125rem */
+  border: 0.125rem solid var(--color-darkest); /* 2px -> 0.125rem */
   border-radius: 0.75rem; /* 12px -> 0.75rem */
   padding: 0.5rem 0.75rem; /* 8px 12px -> 0.5rem 0.75rem */
   flex-grow: 1; /* Allows boxes to share width equally */
@@ -38,7 +38,7 @@
   font-weight: 700; 
   font-size: 2rem;
   line-height: 1.2;
-  color: var(--color-medium); 
+  color: var(--color-darkest); 
 }
 
 .p {
