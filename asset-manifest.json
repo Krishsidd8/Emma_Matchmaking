@@ -1,0 +1,24 @@
+{
+  "files": {
+    "main.css": "/Emma_Matchmaking/static/css/main.56c90b37.css",
+    "main.js": "/Emma_Matchmaking/static/js/main.089c0ecb.js",
+    "static/js/453.3b311a7a.chunk.js": "/Emma_Matchmaking/static/js/453.3b311a7a.chunk.js",
+    "static/media/friendship.png": "/Emma_Matchmaking/static/media/friendship.3ff3efe0b8198e261079.png",
+    "static/media/theater.png": "/Emma_Matchmaking/static/media/theater.efa77af979bd36cbb8fc.png",
+    "static/media/masks.png": "/Emma_Matchmaking/static/media/masks.aabc2be9a7b068b874f0.png",
+    "static/media/fa-solid-900.woff2": "/Emma_Matchmaking/static/media/fa-solid-900.8ae0d37556ff1e685de2.woff2",
+    "static/media/fa-brands-400.woff2": "/Emma_Matchmaking/static/media/fa-brands-400.1c5c7716b05754cb4eab.woff2",
+    "static/media/rightarrow.png": "/Emma_Matchmaking/static/media/rightarrow.f6f0432738bb0819d132.png",
+    "static/media/leftarrow.png": "/Emma_Matchmaking/static/media/leftarrow.2326abc21319e28619a2.png",
+    "static/media/fa-regular-400.woff2": "/Emma_Matchmaking/static/media/fa-regular-400.6f05ca9ab7b5345dbc07.woff2",
+    "static/media/fa-v4compatibility.woff2": "/Emma_Matchmaking/static/media/fa-v4compatibility.e4340c52a50e727c6afa.woff2",
+    "index.html": "/Emma_Matchmaking/index.html",
+    "main.56c90b37.css.map": "/Emma_Matchmaking/static/css/main.56c90b37.css.map",
+    "main.089c0ecb.js.map": "/Emma_Matchmaking/static/js/main.089c0ecb.js.map",
+    "453.3b311a7a.chunk.js.map": "/Emma_Matchmaking/static/js/453.3b311a7a.chunk.js.map"
+  },
+  "entrypoints": [
+    "static/css/main.56c90b37.css",
+    "static/js/main.089c0ecb.js"
+  ]
+}
