@@ -41,15 +41,11 @@ function About() {
 
   // Automatically switch slides every 6 seconds
   useEffect(() => {
-    const interval = setInterval(() => {
-      handleNext();
-    }, 6000);
-    return () => clearInterval(interval);
-  }, []);
-
-  const handleNext = () => {
+  const interval = setInterval(() => {
     setCurrentIndex((prev) => (prev + 1) % slides.length);
-  };
+  }, 6000);
+  return () => clearInterval(interval);
+}, [slides.length]);
 
   const handlePrev = () => {
     setCurrentIndex((prev) => (prev - 1 + slides.length) % slides.length);

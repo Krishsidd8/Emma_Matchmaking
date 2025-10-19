@@ -3,7 +3,6 @@ import "../styles/Matchmaking.css";
 import Navbar from "../components/Navbar";
 import InteractiveGrid from "../animation/InteractiveGrid";
 import Countdown from "../components/Countdown";
-import { Link } from "react-router-dom";
 
 const API_BASE = process.env.REACT_APP_API_BASE || "http://localhost:5000/api";
 
