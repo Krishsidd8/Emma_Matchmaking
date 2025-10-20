@@ -16,7 +16,7 @@ export function Navbar() {
         <div className="pages">
           <Link
             to="/home"
-            className={`nav-link ${location.pathname === "/home" ? "active" : ""}`}
+            className={`nav-link ${location.pathname === "/" ? "active" : ""}`}
           >
             Home
           </Link>
