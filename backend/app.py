@@ -148,8 +148,9 @@ def signup():
     else:
         submitted_at = None
         full = f"{first} {last}"
-        cur.execute("INSERT INTO users (email, first_name, last_name, full_name, grade, submitted_at) VALUES (?, ?, ?, ?, ?, ?)",
-                    (email, first, last, full, grade, submitted_at))
+        cur.execute("INSERT INTO users (email, first_name, last_name, grade, submitted_at) VALUES (?, ?, ?, ?, ?)",
+            (email, first, last, grade, submitted_at))
+
         db.commit()
         uid = cur.lastrowid
 
