@@ -1,4 +1,5 @@
 import "../styles/About.css";
+import "../styles/Fonts.css"
 import Navbar from "../components/Navbar";
 import InteractiveGrid from "../animation/InteractiveGrid";
 import { useState, useEffect } from "react";

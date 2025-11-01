@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import "../styles/Matchmaking.css";
+import "../styles/Fonts.css"
 import Navbar from "../components/Navbar";
 import InteractiveGrid from "../animation/InteractiveGrid";
 import Countdown from "../components/Countdown";
