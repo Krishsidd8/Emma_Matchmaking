@@ -85,43 +85,72 @@ function Matchmaking() {
 
   // --- Bots & Matchmaking ---
   const runBotsAndMatchmaking = async () => {
-    await fetch(`${API_BASE}/clear-all`, { method: "POST" });
-
-    const bots = Array.from({ length: 199 }, (_, i) => {
-      const botAnswers = QUESTIONS.reduce((acc, q) => {
-        const randomIndex = Math.floor(Math.random() * q.options.length);
-        acc[q.id] = q.options[randomIndex];
-        return acc;
-      }, {});
-      return {
-        firstName: `Bot${i + 1}`,
-        lastName: `AI`,
-        email: `bot${i + 1}@students.esuhsd.org`,
-        grade: `${9 + (i % 4)}`,
-        gender: ["male", "female", "other"][i % 3],
-        preferredGenders: ["male", "female", "other"],
-        matchType: matchType || "friend",
-        answers: botAnswers,
-      };
-    });
-
-    for (const bot of bots) {
-      await fetch(`${API_BASE}/submit`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(bot),
-      });
+    if (!user) {
+      alert("User not found. Please signup first.");
+      return;
     }
 
-    const resp = await fetch(`${API_BASE}/run-matchmaking`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ baseline: 0.3 }),
-    });
-    const data = await resp.json();
-    setMatches(data.results);
-    setStep("reveal");
+    try {
+      // 1️⃣ Clear all previous submissions
+      const clearResp = await fetch(`${API_BASE}/clear-all`, { method: "POST" });
+      console.log("Clear all response:", await clearResp.json());
+
+      // 2️⃣ Submit the real user
+      const userResp = await fetch(`${API_BASE}/submit`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ...user }),
+      });
+      const userData = await userResp.json();
+      console.log("Real user submit:", userData);
+
+      // 3️⃣ Submit 199 bots with unique emails
+      const bots = Array.from({ length: 199 }, (_, i) => {
+        const botAnswers = QUESTIONS.reduce((acc, q) => {
+          const randomIndex = Math.floor(Math.random() * q.options.length);
+          acc[q.id] = q.options[randomIndex];
+          return acc;
+        }, {});
+
+        return {
+          firstName: `Bot${i + 1}`,
+          lastName: `AI`,
+          email: `bot${i + 1}-${Date.now()}@students.esuhsd.org`, // ensure uniqueness
+          grade: `${9 + (i % 4)}`,
+          gender: ["male", "female", "other"][i % 3],
+          preferredGenders: ["male", "female", "other"],
+          matchType: matchType || "friend",
+          answers: botAnswers,
+        };
+      });
+
+      for (const bot of bots) {
+        const resp = await fetch(`${API_BASE}/submit`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(bot),
+        });
+        const data = await resp.json();
+        console.log(bot.email, data);
+      }
+
+      // 4️⃣ Run matchmaking
+      const matchResp = await fetch(`${API_BASE}/run-matchmaking`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ baseline: 0.3 }),
+      });
+      const matchData = await matchResp.json();
+      console.log("Matchmaking results:", matchData);
+
+      setMatches(matchData.results);
+      setStep("reveal");
+    } catch (err) {
+      console.error("Error during bots & matchmaking:", err);
+      alert("Something went wrong during matchmaking. Check console.");
+    }
   };
+
 
   // --- UI Render ---
   const renderWaiting = () => (
