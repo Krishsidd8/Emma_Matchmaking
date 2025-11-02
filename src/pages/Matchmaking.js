@@ -83,26 +83,16 @@ function Matchmaking() {
     }
   };
 
-  const fetchMyMatches = async () => {
-    if (!user?.email) return null;
-    const resp = await fetch(`${API_BASE}/my-match?email=${encodeURIComponent(user.email)}`);
-    const data = await resp.json();
-    return data.ok ? data.match : null;
-  };
-
   // --- Bots & Matchmaking ---
   const runBotsAndMatchmaking = async () => {
-    // 1️⃣ Clear all previous submissions
     await fetch(`${API_BASE}/clear-all`, { method: "POST" });
 
-    // 2️⃣ Submit 199 bots with randomized answers
     const bots = Array.from({ length: 199 }, (_, i) => {
       const botAnswers = QUESTIONS.reduce((acc, q) => {
         const randomIndex = Math.floor(Math.random() * q.options.length);
         acc[q.id] = q.options[randomIndex];
         return acc;
       }, {});
-
       return {
         firstName: `Bot${i + 1}`,
         lastName: `AI`,
@@ -115,7 +105,6 @@ function Matchmaking() {
       };
     });
 
-    // Submit bots to API
     for (const bot of bots) {
       await fetch(`${API_BASE}/submit`, {
         method: "POST",
@@ -124,7 +113,6 @@ function Matchmaking() {
       });
     }
 
-    // 3️⃣ Run matchmaking including you
     const resp = await fetch(`${API_BASE}/run-matchmaking`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -134,7 +122,6 @@ function Matchmaking() {
     setMatches(data.results);
     setStep("reveal");
   };
-
 
   // --- UI Render ---
   const renderWaiting = () => (
@@ -157,62 +144,70 @@ function Matchmaking() {
 
   const renderContent = () => {
     switch(step) {
-      case "signup": return (
-        <div className="content-card">
-          <h2>Sign Up</h2>
-          <input placeholder="First Name" value={form.firstName} onChange={e => setForm({...form, firstName: e.target.value})} />
-          <input placeholder="Last Name" value={form.lastName} onChange={e => setForm({...form, lastName: e.target.value})} />
-          <input placeholder="Student Email" value={form.email} onChange={e => setForm({...form, email: e.target.value})} />
-          <select value={form.grade} onChange={e => setForm({...form, grade: e.target.value})}>
-            <option value="">Select Grade</option>
-            <option>9th</option>
-            <option>10th</option>
-            <option>11th</option>
-            <option>12th</option>
-          </select>
-          <select value={form.gender} onChange={e => setForm({...form, gender: e.target.value})}>
-            <option value="">Select Gender</option>
-            <option value="male">Male</option>
-            <option value="female">Female</option>
-            <option value="other">Other</option>
-          </select>
-          <button onClick={handleSignup}>Continue</button>
-        </div>
-      );
-      case "matchType": return (
-        <div className="content-card">
-          <h2>Choose Match Type</h2>
-          <button onClick={() => handleSelectMatchType("friend")}>Friend</button>
-          <button onClick={() => handleSelectMatchType("date")}>Date</button>
-          <button onClick={() => handleSelectMatchType("group")}>Group</button>
-        </div>
-      );
-      case "questions": return (
-        <div className="content-card">
-          <h2>Tell us about yourself!</h2>
-          {QUESTIONS.map(q => (
-            <div key={q.id} className="question">
-              <p><strong>{q.id}. {q.text}</strong></p>
-              {q.options.map((opt, idx) => (
-                <label key={idx}>
-                  <input
-                    type="radio"
-                    name={`question-${q.id}`}
-                    value={opt}
-                    checked={answers[q.id] === opt}
-                    onChange={() => setAnswers({...answers, [q.id]: opt})}
-                  />
-                  <span className="option-label">{String.fromCharCode(65 + idx)}.</span> {opt}
-                </label>
+      case "signup":
+        return (
+          <div className="content-card">
+            <h2>Sign Up</h2>
+            <input placeholder="First Name" value={form.firstName} onChange={e => setForm({...form, firstName: e.target.value})} />
+            <input placeholder="Last Name" value={form.lastName} onChange={e => setForm({...form, lastName: e.target.value})} />
+            <input placeholder="Student Email" value={form.email} onChange={e => setForm({...form, email: e.target.value})} />
+            <select value={form.grade} onChange={e => setForm({...form, grade: e.target.value})}>
+              <option value="">Select Grade</option>
+              <option>9th</option>
+              <option>10th</option>
+              <option>11th</option>
+              <option>12th</option>
+            </select>
+            <select value={form.gender} onChange={e => setForm({...form, gender: e.target.value})}>
+              <option value="">Select Gender</option>
+              <option value="male">Male</option>
+              <option value="female">Female</option>
+              <option value="other">Other</option>
+            </select>
+            <button onClick={handleSignup}>Continue</button>
+          </div>
+        );
+      case "matchType":
+        return (
+          <div className="content-card">
+            <h2>Choose Match Type</h2>
+            <button onClick={() => handleSelectMatchType("friend")}>Friend</button>
+            <button onClick={() => handleSelectMatchType("date")}>Date</button>
+            <button onClick={() => handleSelectMatchType("group")}>Group</button>
+          </div>
+        );
+      case "questions":
+        return (
+          <div className="content-card">
+            <h2>Tell us about yourself!</h2>
+            <div className="scroll-container">
+              {QUESTIONS.map(q => (
+                <div key={q.id} className="question">
+                  <p><strong>{q.id}. {q.text}</strong></p>
+                  {q.options.map((opt, idx) => (
+                    <label key={idx}>
+                      <input
+                        type="radio"
+                        name={`question-${q.id}`}
+                        value={opt}
+                        checked={answers[q.id] === opt}
+                        onChange={() => setAnswers({...answers, [q.id]: opt})}
+                      />
+                      <span className="option-label">{String.fromCharCode(65 + idx)}.</span> {opt}
+                    </label>
+                  ))}
+                </div>
               ))}
             </div>
-          ))}
-          <button onClick={handleSubmit}>Submit</button>
-        </div>
-      );
-      case "waiting": return renderWaiting();
-      case "reveal": return renderReveal();
-      default: return null;
+            <button onClick={handleSubmit}>Submit</button>
+          </div>
+        );
+      case "waiting":
+        return renderWaiting();
+      case "reveal":
+        return renderReveal();
+      default:
+        return null;
     }
   };
 

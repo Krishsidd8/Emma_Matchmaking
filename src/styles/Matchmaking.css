@@ -126,10 +126,13 @@ button:hover {
 }
 
 .scroll-container {
-  max-height: 50vh;      /* adjust as needed */
+  max-height: 60vh;
   overflow-y: auto;
-  padding-right: 0.5rem; /* scrollbar spacing */
+  padding-right: 0.5rem;
   margin-bottom: 1rem;
+  border: 1px solid rgba(0,0,0,0.1);
+  border-radius: 1rem;
+  background-color: rgba(255,255,255,0.7);
 }
 
 /* Radio buttons */
