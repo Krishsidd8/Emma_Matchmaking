@@ -5,10 +5,9 @@ import "../styles/Countdown.css";
 const Countdown = ({ onFinish }) => {
   // Returns target timestamp in milliseconds (UTC)
   const getTargetTime = () => {
-    // Nov 2, 2025 at 9:25 AM PST/PDT
+    // Nov 2, 2025 at 10:25 AM PST/PDT
     // Month is 0-indexed in JS Date (10 = November)
-    const targetUTC = Date.UTC(2025, 10, 2, 17, 0, 0); 
-    // 16:25 UTC = 9:25 AM PDT (-7)
+    const targetUTC = Date.UTC(2025, 10, 2, 18, 25, 0); 
     return targetUTC;
   };
 
