@@ -7,9 +7,9 @@ import { useState, useEffect } from "react";
 import leftArrow from "../assets/leftarrow.png";
 import rightArrow from "../assets/rightarrow.png";
 
-import theater from "../assets/theater.png";
-import masks from "../assets/masks.png";
-import friends from "../assets/friendship.png";
+import firstImage from "../assets/1.png";
+import secondImage from "../assets/2.png";
+import thirdImage from "../assets/3.png";
 
 function About() {
   const slides = [
@@ -18,7 +18,7 @@ function About() {
       text: `We believe that love, like growth, begins with curiosity and care.
       Every match we make is a chance to nurture authentic connections,
       helping people grow closer through empathy, laughter, and self-discovery.`,
-      image: theater,
+      image: firstImage,
     },
     {
       title: "Inspired by Austen’s Emma",
@@ -26,7 +26,7 @@ function About() {
       matchmaking, misunderstanding, and growth. We aim to bring that same
       blend of humor, introspection, and warmth to the modern age through
       interactive storytelling and human-centered design.`,
-      image: masks,
+      image: secondImage,
     },
     {
       title: "Cultivating Growth Together",
@@ -34,7 +34,7 @@ function About() {
       collaboration and creativity. Every project we build is a shared effort
       to foster kindness, curiosity, and connection—because love, in all forms,
       deserves space to grow.`,
-      image: friends,
+      image: thirdImage,
     },
   ];
 

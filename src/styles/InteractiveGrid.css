@@ -65,7 +65,7 @@ body {
 }
 
 .tile:nth-child(4n + 1):hover {
-  background-color: var(--color-lighter);
+  background-color: var(--color-darkest);
 }
 
 .tile:nth-child(4n + 2):hover {
@@ -73,7 +73,7 @@ body {
 }
 
 .tile:nth-child(4n + 3):hover {
-  background-color: var(--color-lighter);
+  background-color: var(--color-medium);
 }
 
 .tile:nth-child(7n):hover {

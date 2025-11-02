@@ -3,7 +3,9 @@ import React, { useState, useEffect } from "react";
 import "../styles/Countdown.css";
 
 const CountdownTimer = () => {
-  const targetDate = "2025-11-06T23:59:00-07:00";
+  // const targetDate = "2025-11-06T23:59:00-07:00";
+  const targetDate = new Date(Date.now() + 10 * 60 * 1000).toISOString(); // 10 minutes from now
+
 
   // Initialize timeRemaining immediately
   const calculateTimeRemaining = () => {

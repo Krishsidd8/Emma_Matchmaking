@@ -62,7 +62,6 @@
   margin-bottom: 1rem;
   letter-spacing: 0.5px;
   text-shadow: 0 2px 8px rgba(255, 180, 180, 0.3);
-  font-family: "Yeseva One", serif;
 }
 
 .about-text p {
@@ -126,7 +125,7 @@
 
 /* Fade animation */
 .fade-in {
-  animation: fadeSlide 3s ease forwards;
+  animation: fadeSlide 5s ease forwards;
 }
 
 @keyframes fadeSlide {
