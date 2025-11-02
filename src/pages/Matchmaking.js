@@ -258,7 +258,7 @@ function Matchmaking() {
             <button onClick={() => handleSelectMatchType("group")}>Group</button>
           </div>
         );
-      case "dataPreferences":
+      case "datePreferences":
         return renderDatePreferences();
       case "questions":
         return (
