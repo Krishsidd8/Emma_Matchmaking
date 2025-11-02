@@ -105,22 +105,28 @@ function Matchmaking() {
   useEffect(() => {
     if (!matches || !user?.id) return;
 
-    const myMatch =
-      matches?.dates?.find((p) => p.a === `user${user.id}` || p.b === `user${user.id}`) ||
-      matches?.friends?.find((p) => p.a === `user${user.id}` || p.b === `user${user.id}`);
+    // Find the matched ID
+    const myMatch = matches?.dates?.find(
+      (p) => p.a === `user${user.id}` || p.b === `user${user.id}`
+    ) || matches?.friends?.find(
+      (p) => p.a === `user${user.id}` || p.b === `user${user.id}`
+    );
 
-    const matchedId = myMatch ? (myMatch.a === `user${user.id}` ? myMatch.b : myMatch.a) : null;
+    const matchedId = myMatch
+      ? myMatch.a === `user${user.id}` ? myMatch.b : myMatch.a
+      : null;
 
     if (!matchedId) return;
 
-    fetch(`${API_BASE}/check-email?email=${matchedId.replace("user", "")}`)
+    // Extract numeric ID
+    const matchedNumericId = matchedId.replace("user", "");
+
+    // Fetch full user info with answers
+    fetch(`${API_BASE}/check-email?email=${matchedNumericId}`)
       .then((res) => res.json())
       .then((data) => {
-        if (data.exists) {
-          setMatchedUser(data.user);
-        } else {
-          setMatchedUser(null);
-        }
+        if (data.exists) setMatchedUser(data.user);
+        else setMatchedUser(null);
       })
       .catch((err) => {
         console.error("Error fetching matched user:", err);

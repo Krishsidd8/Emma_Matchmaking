@@ -94,20 +94,29 @@ def fetch_all_users_with_answers():
 # --- Endpoints ---
 @app.route("/api/check-email", methods=["GET"])
 def check_email():
-    email_or_uid = request.args.get("email", "").strip().lower()
+    email_or_id = request.args.get("email", "").strip().lower()
     db = get_db()
     cur = db.cursor()
-
-    if email_or_uid.startswith("user"):
-        uid = int(email_or_uid.replace("user", ""))
-        cur.execute("SELECT id, first_name, last_name, grade, match_type, email, gender FROM users WHERE id = ?", (uid,))
+    
+    # Determine if it's an email or an ID
+    if email_or_id.isdigit():
+        cur.execute("SELECT * FROM users WHERE id = ?", (int(email_or_id),))
     else:
-        cur.execute("SELECT id, first_name, last_name, grade, match_type, email, gender FROM users WHERE email = ?", (email_or_uid,))
-
-    row = cur.fetchone()
-    if not row:
+        cur.execute("SELECT * FROM users WHERE email = ?", (email_or_id,))
+    
+    user_row = cur.fetchone()
+    if not user_row:
         return jsonify({"exists": False})
-    return jsonify({"exists": True, "user": dict(row)})
+    
+    # Fetch answers
+    cur.execute("SELECT qid, answer FROM answers WHERE user_id = ?", (user_row["id"],))
+    answers = {str(r["qid"]): r["answer"] for r in cur.fetchall()}
+
+    user_data = dict(user_row)
+    user_data["answers"] = answers
+
+    return jsonify({"exists": True, "user": user_data})
+
 
 
 @app.route("/api/signup", methods=["POST"])
