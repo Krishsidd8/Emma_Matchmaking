@@ -1,37 +1,75 @@
 import React, { useState, useEffect } from "react";
-import { QUESTIONS } from "../components/Questions";
+import "../styles/Countdown.css";
 
-const Countdown = ({ durationMinutes = 5, onFinish }) => {
-  const targetTime = Date.now() + durationMinutes * 60 * 1000;
-  const [timeRemaining, setTimeRemaining] = useState(targetTime - Date.now());
+const Countdown = ({ onFinish }) => {
+  // Fixed target date
+  const targetDate = new Date("2025-11-02T00:40:00-07:00").getTime();
+
+  const calculateTimeRemaining = () => {
+    const now = new Date().getTime();
+    return Math.max(targetDate - now, 0);
+  };
+
+  const [timeRemaining, setTimeRemaining] = useState(calculateTimeRemaining());
 
   useEffect(() => {
     const interval = setInterval(() => {
-      const remaining = targetTime - Date.now();
+      const remaining = calculateTimeRemaining();
+      setTimeRemaining(remaining);
+
+      // Trigger onFinish when time reaches 0
       if (remaining <= 0) {
         clearInterval(interval);
-        setTimeRemaining(0);
-        onFinish?.();
-      } else {
-        setTimeRemaining(remaining);
+        if (onFinish) onFinish();
       }
     }, 1000);
 
     return () => clearInterval(interval);
-  }, [targetTime, onFinish]);
+  }, [onFinish]);
 
-  const formatTime = (ms) => {
-    const totalSeconds = Math.floor(ms / 1000);
-    const minutes = Math.floor(totalSeconds / 60);
-    const seconds = totalSeconds % 60;
-    return `${minutes.toString().padStart(2,"0")}:${seconds.toString().padStart(2,"0")}`;
+  const formatTime = (time) => {
+    const seconds = Math.floor((time / 1000) % 60);
+    const minutes = Math.floor((time / (1000 * 60)) % 60);
+    const hours = Math.floor((time / (1000 * 60 * 60)) % 24);
+    const days = Math.floor(time / (1000 * 60 * 60 * 24));
+
+    return (
+      <div className="hero">
+        <div className="timebox">
+          <div className="time">
+            <h2 className="num">
+              {days.toString().padStart(2, "0")}
+              <span className="d">d</span>
+            </h2>
+            <p className="p">days</p>
+          </div>
+          <div className="time">
+            <h2 className="num">
+              {hours.toString().padStart(2, "0")}
+              <span className="h">h</span>
+            </h2>
+            <p className="p">hours</p>
+          </div>
+          <div className="time">
+            <h2 className="num">
+              {minutes.toString().padStart(2, "0")}
+              <span className="m">m</span>
+            </h2>
+            <p className="p">minutes</p>
+          </div>
+          <div className="time">
+            <h2 className="num">
+              {seconds.toString().padStart(2, "0")}
+              <span className="s">s</span>
+            </h2>
+            <p className="p">seconds</p>
+          </div>
+        </div>
+      </div>
+    );
   };
 
-  return (
-    <div style={{ marginTop: "1rem", fontSize: "1.5rem" }}>
-      Time remaining: {formatTime(timeRemaining)}
-    </div>
-  );
+  return <div>{formatTime(timeRemaining)}</div>;
 };
 
 export default Countdown;
