@@ -111,7 +111,7 @@ function Matchmaking() {
         return {
           firstName: `Bot${i + 1}`,
           lastName: `AI`,
-          email: `bot${i + 1}-${Date.now()}@students.esuhsd.org`, // ensure uniqueness
+          email: `bot${i + 1}-${Date.now()}-${Math.floor(Math.random() * 1000)}@students.esuhsd.org`,
           grade: `${9 + (i % 4)}`,
           gender: ["male", "female", "other"][i % 3],
           preferredGenders: ["male", "female", "other"],
