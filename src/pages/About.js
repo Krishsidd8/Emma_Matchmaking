@@ -59,13 +59,15 @@ function About() {
 
       <div className="about-big-box carousel">
         {/* Slide content */}
-        <div key={currentIndex} className="about-section fade-in">
-          <div className="about-text">
-            <h1>{title}</h1>
-            <p>{text}</p>
-          </div>
-          <div className="about-image">
-            <img src={image} alt={title} />
+        <div key={currentIndex} className="about-section">
+          <div className="scroll-container">
+            <div className="about-text">
+              <h1>{title}</h1>
+              <p>{text}</p>
+            </div>
+            <div className="about-image">
+              <img src={image} alt={title} />
+            </div>
           </div>
         </div>
 
