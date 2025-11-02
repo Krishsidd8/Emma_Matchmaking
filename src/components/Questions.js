@@ -22,7 +22,9 @@ const QUESTIONS = [
   { id: 20, text: "You manage time by:", options: ["Planning everything","Prioritizing on the fly","Trusting your gut","Using tech tools"] },
   { id: 21, text: "Your dream space feels like:", options: ["Rustic and warm","Sleek and modern","Colorful and creative","Minimal and serene"] },
   { id: 22, text: "Your beliefs are shaped by:", options: ["Tradition","Exploration","Reflection","Logic"] },
-  { id: 23, text: "You handle tension by:", options: ["Addressing it head-on","Mediating calmly","Retreating to think","Expressing emotions"] },
+  { id: 23, text: "You handle tension by:", options: ["Addressing it head-on","Mediating calmly","Reteating to think","Expressing emotions"] },
   { id: 24, text: "Your favorite kind of memory is:", options: ["Quiet peace","Shared laughter","Personal wins","Spontaneous adventures"] },
   { id: 25, text: "You feel most creative when:", options: ["Making with your hands","Solving puzzles","Telling stories","Rearranging your space"] },
 ];
+
+export default QUESTIONS;
