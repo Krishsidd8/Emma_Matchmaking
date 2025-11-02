@@ -233,39 +233,39 @@ def run_matchmaking():
     # Include unmatched users from friends/dates
     group_users += unmatched_friends + unmatched_dates
 
-    def form_groups_balanced(group_users, group_size=4, min_size=3, max_size=4):
-        n_users = len(group_users)
-        if n_users < min_size:
-            return [group_users] if group_users else []
+    def form_groups_balanced(group_users, min_size=3, max_size=4):
+        if not group_users:
+            return []
 
-        sim_sub = sim_mat.loc[group_users, group_users]
-        dist = 1 - sim_sub.values
+        groups = []
+        temp = list(group_users)
 
-        if AgglomerativeClustering is None:
-            groups = [group_users[i:i+max_size] for i in range(0,len(group_users),max_size)]
-        else:
-            n_clusters = math.ceil(n_users / group_size)
-            try:
-                model = AgglomerativeClustering(n_clusters=n_clusters, metric='precomputed', linkage='average')
-                labels = model.fit_predict(dist)
-            except TypeError:
-                model = AgglomerativeClustering(n_clusters=n_clusters, affinity='precomputed', linkage='average')
-                labels = model.fit_predict(dist)
-            groups_dict = defaultdict(list)
-            for uid, lab in zip(group_users, labels):
-                groups_dict[lab].append(uid)
-            groups = list(groups_dict.values())
+        # Shuffle so merging is more random (optional)
+        np.random.shuffle(temp)
 
-        # Merge small groups
-        small_groups = [g for g in groups if len(g) < min_size]
-        large_groups = [g for g in groups if len(g) >= min_size]
-        leftovers = [u for g in small_groups for u in g]
-        for g in large_groups:
-            while len(g) < max_size and leftovers:
-                g.append(leftovers.pop())
-        if leftovers:
-            large_groups.append(leftovers[:max_size])
-        return large_groups
+        # Make groups of max_size
+        while len(temp) >= max_size:
+            groups.append(temp[:max_size])
+            temp = temp[max_size:]
+
+        # Handle leftovers
+        while temp:
+            if len(temp) >= min_size:
+                groups.append(temp[:max_size])
+                temp = temp[max_size:]
+            else:
+                # Add leftover users to existing groups that have < max_size
+                added = False
+                for g in groups:
+                    while len(g) < max_size and temp:
+                        g.append(temp.pop(0))
+                        added = True
+                if not added:
+                    # If still leftover and no group can take them, make a new small group
+                    groups.append(temp[:])
+                    temp = []
+
+        return groups
 
     groups = form_groups_balanced(group_users)
 
