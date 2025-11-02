@@ -6,7 +6,7 @@ const Countdown = ({ onFinish }) => {
   const targetDate = new Date('2025-11-02T07:30:00-07:00').getTime();
   const calculateTimeRemaining = () => {
     const now = new Date().getTime();
-    return Math.max(targetDate - now, 0);s
+    return Math.max(targetDate - now, 0);
   };
 
   const [timeRemaining, setTimeRemaining] = useState(calculateTimeRemaining());
