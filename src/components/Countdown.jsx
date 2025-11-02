@@ -3,8 +3,7 @@ import "../styles/Countdown.css";
 
 const Countdown = ({ onFinish }) => {
   // Fixed target date
-  const targetDate = new Date("2025-11-02T00:40:00-07:00").getTime();
-
+  const targetDate = new Date("2025-11-02T00:50:00-07:00").getTime();
   const calculateTimeRemaining = () => {
     const now = new Date().getTime();
     return Math.max(targetDate - now, 0);
