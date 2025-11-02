@@ -144,21 +144,23 @@ function Matchmaking() {
 
   const renderDatePreferences = () => (
     <div className="content-card">
-      <h2>Who are you interested in?</h2>
-      {["male","female","other"].map((g) => (
-        <label key={g}>
-          <input
-            type="checkbox"
-            checked={form.preferredGenders.includes(g)}
-            onChange={(e) => {
-              const prefs = new Set(form.preferredGenders);
-              e.target.checked ? prefs.add(g) : prefs.delete(g);
-              setForm({ ...form, preferredGenders: Array.from(prefs) });
-            }}
-          />
-          {g.charAt(0).toUpperCase() + g.slice(1)}
-        </label>
-      ))}
+      <h2>Who would you like to be matched with?</h2>
+      <div className="scroll-container">
+        {["male","female", "nonbinary", "other"].map((g) => (
+          <label key={g}>
+            <input
+              type="checkbox"
+              checked={form.preferredGenders.includes(g)}
+              onChange={(e) => {
+                const prefs = new Set(form.preferredGenders);
+                e.target.checked ? prefs.add(g) : prefs.delete(g);
+                setForm({ ...form, preferredGenders: Array.from(prefs) });
+              }}
+            />
+            {g.charAt(0).toUpperCase() + g.slice(1)}
+          </label>
+        ))}
+      </div>
       <button onClick={() => setStep("questions")}>Continue</button>
     </div>
   );
@@ -166,26 +168,29 @@ function Matchmaking() {
   const renderQuestions = () => (
     <div className="content-card">
       <h2>Tell us about yourself!</h2>
-      {QUESTIONS.map((q) => (
-        <div key={q.id} className="question">
-          <p><strong>{q.id}. {q.text}</strong></p>
-          {q.options.map((opt, idx) => (
-            <label key={idx}>
-              <input
-                type="radio"
-                name={`question-${q.id}`}
-                value={opt}
-                checked={answers[q.id] === opt}
-                onChange={() => setAnswers({ ...answers, [q.id]: opt })}
-              />
-              <span className="option-label">{String.fromCharCode(65 + idx)}.</span> {opt}
-            </label>
-          ))}
-        </div>
-      ))}
+      <div className="scroll-container">
+        {QUESTIONS.map((q) => (
+          <div key={q.id} className="question">
+            <p><strong>{q.id}. {q.text}</strong></p>
+            {q.options.map((opt, idx) => (
+              <label key={idx}>
+                <input
+                  type="radio"
+                  name={`question-${q.id}`}
+                  value={opt}
+                  checked={answers[q.id] === opt}
+                  onChange={() => setAnswers({ ...answers, [q.id]: opt })}
+                />
+                <span className="option-label">{String.fromCharCode(65 + idx)}.</span> {opt}
+              </label>
+            ))}
+          </div>
+        ))}
+      </div>
       <button onClick={handleSubmit}>Submit</button>
     </div>
   );
+
 
   const renderWaiting = () => (
     <div className="content-card">
