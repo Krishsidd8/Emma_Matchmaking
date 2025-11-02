@@ -140,7 +140,7 @@ function Matchmaking() {
       <h2>Your submission is saved.</h2>
       <p>Waiting for matchmaking...</p>
       <Countdown
-        targetDate="2025-11-02T09:35:00-08:00" // Fixed: 8AM PST on Nov 2, 2025
+        targetDate="2025-11-02T010:00:00-08:00" // Fixed: 10AM PST on Nov 2, 2025
         onFinish={runMatchmaking}
       />
     </div>
