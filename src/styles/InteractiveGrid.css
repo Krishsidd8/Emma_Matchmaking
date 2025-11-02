@@ -4,7 +4,7 @@ body {
   width: 100%;
   align-items: center;
   justify-content: center;
-  background: var(--color-lighter);
+  background: var(--color-light);
   overflow: hidden;
   perspective: 2000px;
   margin: 0;
@@ -47,12 +47,12 @@ body {
   background: radial-gradient(
     circle,
     transparent 25%,
-    (var(--color-light) 80%
+    (var(--color-lighter) 80%
   ));
 }
 
 .tile {
-  border: 1px solid var(--color-light);
+  border: 1px solid var(--color-lighter);
   transition: background-color 1500ms;
 }
 
@@ -65,7 +65,7 @@ body {
 }
 
 .tile:nth-child(4n + 1):hover {
-  background-color: var(--color-light);
+  background-color: var(--color-lighter);
 }
 
 .tile:nth-child(4n + 2):hover {
@@ -73,7 +73,7 @@ body {
 }
 
 .tile:nth-child(4n + 3):hover {
-  background-color: var(--color-light);
+  background-color: var(--color-lighter);
 }
 
 .tile:nth-child(7n):hover {
@@ -97,7 +97,7 @@ body {
 }
 
 .tile:nth-child(11n + 4):hover {
-  background-color: var(--color-light);
+  background-color: var(--color-lighter);
 }
 
 .tile:nth-child(11n + 7):hover {
@@ -105,7 +105,7 @@ body {
 }
 
 .tile:nth-child(11n + 10):hover {
-  background-color: var(--color-light);
+  background-color: var(--color-lighter);
 }
 
 /* -- Links -- */
