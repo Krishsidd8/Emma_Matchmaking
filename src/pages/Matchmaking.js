@@ -22,6 +22,7 @@ function Matchmaking() {
   const [answers, setAnswers] = useState({});
   const [user, setUser] = useState(() => JSON.parse(localStorage.getItem("emma_user")) || null);
   const [matches, setMatches] = useState(null);
+  const [matchedUser, setMatchedUser] = useState(null);
 
   // --- API Helpers ---
   const handleSignup = async () => {
@@ -84,31 +85,54 @@ function Matchmaking() {
   };
 
   // --- Bots & Matchmaking ---
-  const runBotsAndMatchmaking = async () => {
+  const runMatchmaking = async () => {
     try {
-      // 1️⃣ Generate bots first
-      await fetch(`${API_BASE}/generate-bots`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ count: 200 }),
-      });
-
-      // 2️⃣ Run matchmaking algorithm
       const matchResp = await fetch(`${API_BASE}/run-matchmaking`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ baseline: 0.1 }),
       });
       const matchData = await matchResp.json();
-
       setMatches(matchData.results);
       setStep("reveal");
     } catch (err) {
-      console.error("Error during bots & matchmaking:", err);
+      console.error("Error during matchmaking:", err);
       alert("Something went wrong during matchmaking. Check console.");
     }
   };
 
+  // --- Fetch matched user ---
+  useEffect(() => {
+    if (!matches || !user?.id) return;
+
+    const myMatch = matches?.dates?.find(
+      (p) => p.a === `user${user.id}` || p.b === `user${user.id}`
+    ) || matches?.friends?.find(
+      (p) => p.a === `user${user.id}` || p.b === `user${user.id}`
+    );
+
+    const matchedId = myMatch
+      ? myMatch.a === `user${user.id}` ? myMatch.b : myMatch.a
+      : null;
+
+    if (!matchedId) return;
+
+    // Fetch matched user's info directly from API
+    fetch(`${API_BASE}/check-email?email=${matchedId.replace("user","")}`) 
+      .then(res => res.json())
+      .then(data => {
+        if (data.exists) {
+          setMatchedUser(data.user);
+        } else {
+          setMatchedUser(null);
+        }
+      })
+      .catch(err => {
+        console.error("Error fetching matched user:", err);
+        setMatchedUser(null);
+      });
+
+  }, [matches, user]);
 
 
   // --- UI Render ---
@@ -117,24 +141,37 @@ function Matchmaking() {
       <h2>Your submission is saved.</h2>
       <p>Waiting for matchmaking...</p>
       <Countdown
-        targetDate="2025-11-02T07:30:00"
-        onFinish={runBotsAndMatchmaking}
+        targetDate="2025-11-02T08:00:00"
+        onFinish={runMatchmaking}
       />
     </div>
   );
 
-  const renderReveal = () => (
-    <div className="content-card">
-      <h2>Matches Revealed</h2>
-      <div className="scroll-container">
-        {matches ? (
-          <pre>{JSON.stringify(matches, null, 2)}</pre>
+  const renderReveal = () => {
+    if (!user?.email) return null;
+
+    return (
+      <div className="content-card">
+        <h2>Your Match</h2>
+        {matchedUser ? (
+          <div>
+            <p><strong>Name:</strong> {matchedUser.first_name} {matchedUser.last_name}</p>
+            <p><strong>Grade:</strong> {matchedUser.grade}</p>
+            <p><strong>Email:</strong> {matchedUser.email}</p>
+            <p><strong>Gender:</strong> {matchedUser.gender}</p>
+            <p><strong>Matched Questions:</strong></p>
+            <ul>
+              {Object.entries(user.answers || {})
+                .filter(([qid, ans]) => matchedUser.answers && matchedUser.answers[qid] === ans)
+                .map(([qid, ans]) => <li key={qid}>{`Q${qid}: ${ans}`}</li>)}
+            </ul>
+          </div>
         ) : (
-          <p>Loading matches...</p>
+          <p>Loading your match...</p>
         )}
       </div>
-    </div>
-  );
+    );
+  };
 
   const renderContent = () => {
     switch(step) {

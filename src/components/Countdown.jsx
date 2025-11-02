@@ -2,8 +2,8 @@ import React, { useState, useEffect } from "react";
 import "../styles/Countdown.css";
 
 const Countdown = ({ onFinish }) => {
-  // Fixed target date
-  const targetDate = new Date('2025-11-02T07:30:00-07:00').getTime();
+  // Change target date to 8:00AM PST Nov 2, 2025
+  const targetDate = new Date('2025-11-02T08:00:00-07:00').getTime();
   const calculateTimeRemaining = () => {
     const now = new Date().getTime();
     return Math.max(targetDate - now, 0);

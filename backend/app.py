@@ -94,14 +94,21 @@ def fetch_all_users_with_answers():
 # --- Endpoints ---
 @app.route("/api/check-email", methods=["GET"])
 def check_email():
-    email = request.args.get("email", "").strip().lower()
+    email_or_uid = request.args.get("email", "").strip().lower()
     db = get_db()
     cur = db.cursor()
-    cur.execute("SELECT id, first_name, last_name, grade, match_type FROM users WHERE email = ?", (email,))
+
+    if email_or_uid.startswith("user"):
+        uid = int(email_or_uid.replace("user", ""))
+        cur.execute("SELECT id, first_name, last_name, grade, match_type, email, gender FROM users WHERE id = ?", (uid,))
+    else:
+        cur.execute("SELECT id, first_name, last_name, grade, match_type, email, gender FROM users WHERE email = ?", (email_or_uid,))
+
     row = cur.fetchone()
     if not row:
         return jsonify({"exists": False})
     return jsonify({"exists": True, "user": dict(row)})
+
 
 @app.route("/api/signup", methods=["POST"])
 def signup():
@@ -321,42 +328,6 @@ def my_match():
         if uid in grp:
             found["groups"].append(grp)
     return jsonify({"ok": True, "user": dict(user), "match": found})
-
-
-@app.route("/api/generate-bots", methods=["POST"])
-def generate_bots():
-    """Generate test bots with random answers"""
-    data = request.get_json() or {}
-    num_bots = int(data.get("count", 100))
-    match_types = ["friend", "date", "group"]
-
-    db = get_db()
-    cur = db.cursor()
-
-    for i in range(num_bots):
-        first = f"Bot{i+1}"
-        last = "AI"
-        email = f"bot{i+1}-{int(datetime.utcnow().timestamp())}-{np.random.randint(1000,9999)}@students.esuhsd.org"
-        grade = f"{np.random.choice([9,10,11,12])}th"
-        gender = np.random.choice(["male", "female", "other"])
-        preferred_genders = json.dumps(["male", "female", "other"])
-        match_type = np.random.choice(match_types)
-
-        # Insert user
-        cur.execute(
-            """INSERT OR IGNORE INTO users (first_name, last_name, email, grade, gender, preferred_genders, match_type, submitted_at)
-               VALUES (?, ?, ?, ?, ?, ?, ?, ?)""",
-            (first, last, email, grade, gender, preferred_genders, match_type, datetime.utcnow().isoformat()),
-        )
-        uid = cur.lastrowid or cur.execute("SELECT id FROM users WHERE email = ?", (email,)).fetchone()["id"]
-
-        # 25 random answers (1–4)
-        for qid in range(1, 26):
-            ans = f"Option {np.random.randint(1, 5)}"
-            cur.execute("INSERT INTO answers (user_id, qid, answer) VALUES (?, ?, ?)", (uid, qid, ans))
-
-    db.commit()
-    return jsonify({"ok": True, "message": f"{num_bots} bots added."})
 
 
 if __name__ == "__main__":
