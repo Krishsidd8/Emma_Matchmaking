@@ -25,6 +25,7 @@
   font-weight: 600;
   text-align: center;
   white-space: nowrap;
+  font-family: "Regular";
 }
 
 /* Right side nav links */
@@ -54,6 +55,7 @@
   padding: 0.4rem 0.8rem;
   border-radius: 0.75rem;
   transition: all 0.25s ease;
+  font-family: "Regular";
 }
 
 .nav-link:hover {

@@ -43,6 +43,7 @@
   line-height: 1.7;
   max-width: 600px;
   text-shadow: 0 0 8px rgba(255, 255, 255, 0.4);
+  font-family: "Regular";
 }
 
 .find, .about {
