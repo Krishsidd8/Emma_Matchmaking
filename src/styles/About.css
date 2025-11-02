@@ -125,7 +125,7 @@
 
 /* Fade animation */
 .fade-in {
-  animation: fadeSlide 5s ease forwards;
+  animation: fadeSlide 7.5s ease forwards;
 }
 
 @keyframes fadeSlide {
@@ -184,7 +184,7 @@
 /* Dots */
 .carousel-dots {
   position: absolute;
-  bottom: 30px;
+  bottom: 15px;
   display: flex;
   gap: 0.7rem;
 }
