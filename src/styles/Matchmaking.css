@@ -33,7 +33,7 @@
 
 @media (max-width: 768px) {
   .content-card {
-    width: 90%;       /* smaller on mobile */
+    width: 90%;
     padding: 2rem;
   }
 }
@@ -55,6 +55,7 @@
   max-width: 600px;
 }
 
+/* Input and select fields */
 input,
 select {
   width: 100%;
@@ -74,13 +75,14 @@ select:focus {
   box-shadow: 0 0 0.5rem rgba(255, 180, 180, 0.5);
 }
 
+/* Buttons */
 button {
   padding: 0.75rem 1.5rem;
   margin-top: 1rem;
   border: none;
   border-radius: 1rem;
   background: var(--color-darkest);
-  color: #2f1c1c;
+  color: #fff;
   font-weight: 600;
   cursor: pointer;
   transition: all 0.2s ease-in-out;
@@ -91,6 +93,7 @@ button:hover {
   box-shadow: 0 0.5rem 1rem rgba(255, 180, 180, 0.4);
 }
 
+/* Main containers */
 .matchmaking,
 .match-type,
 .waiting,
@@ -100,13 +103,14 @@ button:hover {
   width: 100%;
 }
 
+/* Questions list */
 .questions-container {
   display: flex;
   flex-direction: column;
   width: 100%;
-  max-height: 70vh;     /* slightly taller for scrolling */
+  max-height: 70vh;
   overflow-y: auto;
-  padding-right: 1rem;  /* for scrollbar spacing */
+  padding-right: 1rem;
 }
 
 .question {
@@ -121,6 +125,7 @@ button:hover {
   font-size: 1rem;
 }
 
+/* Radio buttons */
 label {
   display: flex;
   align-items: center;
@@ -129,10 +134,10 @@ label {
 }
 
 input[type="radio"] {
-  margin-right: 0.5rem;  /* space from label text */
-  width: auto;           /* shrink layout width */
+  margin-right: 0.5rem;
+  width: auto;
   height: auto;
-  transform: scale(1.5); /* make circle bigger */
+  transform: scale(1.5);
   vertical-align: middle;
 }
 
@@ -140,9 +145,9 @@ input[type="radio"] {
   font-weight: bold;
   margin-right: 0.25rem;
   color: #2f1c1c;
-
 }
 
+/* Reveal output */
 .reveal pre {
   background-color: var(--color-medium);
   padding: 1rem;
