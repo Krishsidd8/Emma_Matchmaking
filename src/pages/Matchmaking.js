@@ -57,7 +57,7 @@ function Matchmaking() {
   // --- Add this function ---
   const renderDatePreferences = () => (
     <div className="content-card">
-      <h2>Select Your Preferred Genders</h2>
+      <h2>Select Who You Would Like To Be Matched With?</h2>
       <div className="scroll-container">
         {["male", "female", "other"].map((gender) => (
           <label key={gender}>
@@ -258,7 +258,7 @@ function Matchmaking() {
             <button onClick={() => handleSelectMatchType("group")}>Group</button>
           </div>
         );
-      case "dataPreference":
+      case "dataPreferences":
         return renderDatePreferences();
       case "questions":
         return (
