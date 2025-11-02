@@ -28,7 +28,6 @@
 
 .content-card h1 {
   font-size: 1.25rem;
-  font-family: "Lucida Console", "Courier New", monospace;
   font-weight: 700;
   color: #2f1c1c;
   margin-bottom: 1rem;
@@ -38,7 +37,6 @@
 
 /* Elegant Subtext */
 .content-card p {
-  font-family: "Lucida Console", "Courier New", monospace;
   font-size: 1rem;
   color: #4a3c3c;
   margin-bottom: 1rem;

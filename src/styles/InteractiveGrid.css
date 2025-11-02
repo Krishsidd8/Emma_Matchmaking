@@ -128,7 +128,6 @@ body {
 }
 
 .meta-link > :is(span, a) {
-  font-family: "Rubik", sans-serif;
   font-size: 1.25rem;
   color: white;
 }

@@ -25,7 +25,6 @@
   font-weight: 600;
   text-align: center;
   white-space: nowrap;
-  font-family: "Great Vibes", cursive;
 }
 
 /* Right side nav links */
@@ -50,7 +49,6 @@
 .nav-link {
   position: relative;
   font-size: 1rem;
-  font-family: "Lucida Console", "Courier New", monospace;
   text-decoration: none;
   color: #444;
   padding: 0.4rem 0.8rem;
