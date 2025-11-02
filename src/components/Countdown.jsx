@@ -1,16 +1,13 @@
-import React, { useState, useEffect } from "react";
-
+import React, { useState, useEffect, useRef } from "react";
 import "../styles/Countdown.css";
 
 const CountdownTimer = () => {
-  // const targetDate = "2025-11-06T23:59:00-07:00";
-  const targetDate = new Date(Date.now() + 10 * 60 * 1000).toISOString(); // 10 minutes from now
+  // Set target date once using useRef to avoid resetting on re-render
+  const targetDate = useRef(new Date(Date.now() + 10 * 60 * 1000)); // 10 minutes from now
 
-
-  // Initialize timeRemaining immediately
   const calculateTimeRemaining = () => {
     const now = new Date().getTime();
-    const eventTime = new Date(targetDate).getTime();
+    const eventTime = targetDate.current.getTime();
     return Math.max(eventTime - now, 0);
   };
 
@@ -22,7 +19,7 @@ const CountdownTimer = () => {
     }, 1000);
 
     return () => clearInterval(countdownInterval);
-  }, [targetDate]);
+  }, []);
 
   const formatTime = (time) => {
     const seconds = Math.floor((time / 1000) % 60);
@@ -35,29 +32,29 @@ const CountdownTimer = () => {
         <div className="timebox">
           <div className="time">
             <h2 className="num">
-              {days.toString().padStart(2, "0")}
-              <text className="d">d</text>
+              {String(days).padStart(2, "0")}
+              <span className="d">d</span>
             </h2>
             <p className="p">days</p>
           </div>
           <div className="time">
             <h2 className="num">
-              {hours.toString().padStart(2, "0")}
-              <text className="h">h</text>
+              {String(hours).padStart(2, "0")}
+              <span className="h">h</span>
             </h2>
             <p className="p">hours</p>
           </div>
           <div className="time">
             <h2 className="num">
-              {minutes.toString().padStart(2, "0")}
-              <text className="m">m</text>
+              {String(minutes).padStart(2, "0")}
+              <span className="m">m</span>
             </h2>
             <p className="p">minutes</p>
           </div>
           <div className="time">
             <h2 className="num">
-              {seconds.toString().padStart(2, "0")}
-              <text className="s">s</text>
+              {String(seconds).padStart(2, "0")}
+              <span className="s">s</span>
             </h2>
             <p className="p">seconds</p>
           </div>
