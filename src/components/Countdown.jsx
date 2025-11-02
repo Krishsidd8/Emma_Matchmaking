@@ -1,22 +1,26 @@
 import React, { useState, useEffect } from "react";
 import "../styles/Countdown.css";
 
+// PST offset is -8 hours, but consider daylight saving
+const PST_OFFSET = -8; // PST standard time
+const PDT_OFFSET = -7; // PDT daylight saving
+
 const Countdown = ({ onFinish }) => {
-  // Change target date to 8:00AM PST Nov 2, 2025
-  const targetDate = new Date('2025-11-02T08:40:00-07:00').getTime();
-  const calculateTimeRemaining = () => {
-    const now = new Date().getTime();
-    return Math.max(targetDate - now, 0);
+  // Returns target timestamp in milliseconds (UTC)
+  const getTargetTime = () => {
+    // Nov 2, 2025 at 8:00 AM PST/PDT
+    // We use Date.UTC and adjust by offset
+    const targetUTC = Date.UTC(2025, 10, 2, 9 - PST_OFFSET, 0, 0); // Month 10 = Nov
+    return targetUTC;
   };
 
-  const [timeRemaining, setTimeRemaining] = useState(calculateTimeRemaining());
+  const [timeRemaining, setTimeRemaining] = useState(() => Math.max(getTargetTime() - Date.now(), 0));
 
   useEffect(() => {
     const interval = setInterval(() => {
-      const remaining = calculateTimeRemaining();
+      const remaining = Math.max(getTargetTime() - Date.now(), 0);
       setTimeRemaining(remaining);
 
-      // Trigger onFinish when time reaches 0
       if (remaining <= 0) {
         clearInterval(interval);
         if (onFinish) onFinish();

@@ -105,35 +105,28 @@ function Matchmaking() {
   useEffect(() => {
     if (!matches || !user?.id) return;
 
-    const myMatch = matches?.dates?.find(
-      (p) => p.a === `user${user.id}` || p.b === `user${user.id}`
-    ) || matches?.friends?.find(
-      (p) => p.a === `user${user.id}` || p.b === `user${user.id}`
-    );
+    const myMatch =
+      matches?.dates?.find((p) => p.a === `user${user.id}` || p.b === `user${user.id}`) ||
+      matches?.friends?.find((p) => p.a === `user${user.id}` || p.b === `user${user.id}`);
 
-    const matchedId = myMatch
-      ? myMatch.a === `user${user.id}` ? myMatch.b : myMatch.a
-      : null;
+    const matchedId = myMatch ? (myMatch.a === `user${user.id}` ? myMatch.b : myMatch.a) : null;
 
     if (!matchedId) return;
 
-    // Fetch matched user's info directly from API
-    fetch(`${API_BASE}/check-email?email=${matchedId.replace("user","")}`) 
-      .then(res => res.json())
-      .then(data => {
+    fetch(`${API_BASE}/check-email?email=${matchedId.replace("user", "")}`)
+      .then((res) => res.json())
+      .then((data) => {
         if (data.exists) {
           setMatchedUser(data.user);
         } else {
           setMatchedUser(null);
         }
       })
-      .catch(err => {
+      .catch((err) => {
         console.error("Error fetching matched user:", err);
         setMatchedUser(null);
       });
-
   }, [matches, user]);
-
 
   // --- UI Render ---
   const renderWaiting = () => (
@@ -141,7 +134,7 @@ function Matchmaking() {
       <h2>Your submission is saved.</h2>
       <p>Waiting for matchmaking...</p>
       <Countdown
-        targetDate="2025-11-02T08:40:00-7:00"
+        targetDate="2025-11-02T08:00:00-08:00" // Fixed: 8AM PST on Nov 2, 2025
         onFinish={runMatchmaking}
       />
     </div>
@@ -155,15 +148,27 @@ function Matchmaking() {
         <h2>Your Match</h2>
         {matchedUser ? (
           <div>
-            <p><strong>Name:</strong> {matchedUser.first_name} {matchedUser.last_name}</p>
-            <p><strong>Grade:</strong> {matchedUser.grade}</p>
-            <p><strong>Email:</strong> {matchedUser.email}</p>
-            <p><strong>Gender:</strong> {matchedUser.gender}</p>
-            <p><strong>Matched Questions:</strong></p>
+            <p>
+              <strong>Name:</strong> {matchedUser.first_name} {matchedUser.last_name}
+            </p>
+            <p>
+              <strong>Grade:</strong> {matchedUser.grade}
+            </p>
+            <p>
+              <strong>Email:</strong> {matchedUser.email}
+            </p>
+            <p>
+              <strong>Gender:</strong> {matchedUser.gender}
+            </p>
+            <p>
+              <strong>Matched Questions:</strong>
+            </p>
             <ul>
               {Object.entries(user.answers || {})
                 .filter(([qid, ans]) => matchedUser.answers && matchedUser.answers[qid] === ans)
-                .map(([qid, ans]) => <li key={qid}>{`Q${qid}: ${ans}`}</li>)}
+                .map(([qid, ans]) => (
+                  <li key={qid}>{`Q${qid}: ${ans}`}</li>
+                ))}
             </ul>
           </div>
         ) : (
@@ -174,22 +179,34 @@ function Matchmaking() {
   };
 
   const renderContent = () => {
-    switch(step) {
+    switch (step) {
       case "signup":
         return (
           <div className="content-card">
             <h2>Sign Up</h2>
-            <input placeholder="First Name" value={form.firstName} onChange={e => setForm({...form, firstName: e.target.value})} />
-            <input placeholder="Last Name" value={form.lastName} onChange={e => setForm({...form, lastName: e.target.value})} />
-            <input placeholder="Student Email" value={form.email} onChange={e => setForm({...form, email: e.target.value})} />
-            <select value={form.grade} onChange={e => setForm({...form, grade: e.target.value})}>
+            <input
+              placeholder="First Name"
+              value={form.firstName}
+              onChange={(e) => setForm({ ...form, firstName: e.target.value })}
+            />
+            <input
+              placeholder="Last Name"
+              value={form.lastName}
+              onChange={(e) => setForm({ ...form, lastName: e.target.value })}
+            />
+            <input
+              placeholder="Student Email"
+              value={form.email}
+              onChange={(e) => setForm({ ...form, email: e.target.value })}
+            />
+            <select value={form.grade} onChange={(e) => setForm({ ...form, grade: e.target.value })}>
               <option value="">Select Grade</option>
               <option>9th</option>
               <option>10th</option>
               <option>11th</option>
               <option>12th</option>
             </select>
-            <select value={form.gender} onChange={e => setForm({...form, gender: e.target.value})}>
+            <select value={form.gender} onChange={(e) => setForm({ ...form, gender: e.target.value })}>
               <option value="">Select Gender</option>
               <option value="male">Male</option>
               <option value="female">Female</option>
@@ -212,9 +229,13 @@ function Matchmaking() {
           <div className="content-card">
             <h2>Tell us about yourself!</h2>
             <div className="scroll-container">
-              {QUESTIONS.map(q => (
+              {QUESTIONS.map((q) => (
                 <div key={q.id} className="question">
-                  <p><strong>{q.id}. {q.text}</strong></p>
+                  <p>
+                    <strong>
+                      {q.id}. {q.text}
+                    </strong>
+                  </p>
                   {q.options.map((opt, idx) => (
                     <label key={idx}>
                       <input
@@ -222,7 +243,7 @@ function Matchmaking() {
                         name={`question-${q.id}`}
                         value={opt}
                         checked={answers[q.id] === opt}
-                        onChange={() => setAnswers({...answers, [q.id]: opt})}
+                        onChange={() => setAnswers({ ...answers, [q.id]: opt })}
                       />
                       <span className="option-label">{String.fromCharCode(65 + idx)}.</span> {opt}
                     </label>
@@ -245,7 +266,9 @@ function Matchmaking() {
   return (
     <div className="appheader">
       <InteractiveGrid />
-      <nav className="navbar"><Navbar /></nav>
+      <nav className="navbar">
+        <Navbar />
+      </nav>
       {renderContent()}
     </div>
   );
