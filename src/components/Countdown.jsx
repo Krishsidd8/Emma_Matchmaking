@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { QUESTIONS } from "../components/Questions.js";
+import { QUESTIONS } from "../components/Questions";
 
 const Countdown = ({ durationMinutes = 5, onFinish }) => {
   const targetTime = Date.now() + durationMinutes * 60 * 1000;
