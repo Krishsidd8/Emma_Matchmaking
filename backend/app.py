@@ -315,5 +315,42 @@ def my_match():
             found["groups"].append(grp)
     return jsonify({"ok": True, "user": dict(user), "match": found})
 
+
+@app.route("/api/generate-bots", methods=["POST"])
+def generate_bots():
+    """Generate test bots with random answers"""
+    data = request.get_json() or {}
+    num_bots = int(data.get("count", 100))
+    match_types = ["friend", "date", "group"]
+
+    db = get_db()
+    cur = db.cursor()
+
+    for i in range(num_bots):
+        first = f"Bot{i+1}"
+        last = "AI"
+        email = f"bot{i+1}-{int(datetime.utcnow().timestamp())}-{np.random.randint(1000,9999)}@students.esuhsd.org"
+        grade = f"{np.random.choice([9,10,11,12])}th"
+        gender = np.random.choice(["male", "female", "other"])
+        preferred_genders = json.dumps(["male", "female", "other"])
+        match_type = np.random.choice(match_types)
+
+        # Insert user
+        cur.execute(
+            """INSERT OR IGNORE INTO users (first_name, last_name, email, grade, gender, preferred_genders, match_type, submitted_at)
+               VALUES (?, ?, ?, ?, ?, ?, ?, ?)""",
+            (first, last, email, grade, gender, preferred_genders, match_type, datetime.utcnow().isoformat()),
+        )
+        uid = cur.lastrowid or cur.execute("SELECT id FROM users WHERE email = ?", (email,)).fetchone()["id"]
+
+        # 25 random answers (1–4)
+        for qid in range(1, 26):
+            ans = f"Option {np.random.randint(1, 5)}"
+            cur.execute("INSERT INTO answers (user_id, qid, answer) VALUES (?, ?, ?)", (uid, qid, ans))
+
+    db.commit()
+    return jsonify({"ok": True, "message": f"{num_bots} bots added."})
+
+
 if __name__ == "__main__":
     app.run(debug=True, host="0.0.0.0", port=int(os.environ.get("PORT",5000)))
