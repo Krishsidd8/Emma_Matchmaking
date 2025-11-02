@@ -1,6 +1,6 @@
 {
   "files": {
-    "main.css": "/Emma_Matchmaking/static/css/main.8f20c319.css",
+    "main.css": "/Emma_Matchmaking/static/css/main.6e94f4b0.css",
     "main.js": "/Emma_Matchmaking/static/js/main.13feda18.js",
     "static/js/453.3b311a7a.chunk.js": "/Emma_Matchmaking/static/js/453.3b311a7a.chunk.js",
     "static/media/friendship.png": "/Emma_Matchmaking/static/media/friendship.3ff3efe0b8198e261079.png",
@@ -13,12 +13,12 @@
     "static/media/fa-regular-400.woff2": "/Emma_Matchmaking/static/media/fa-regular-400.6f05ca9ab7b5345dbc07.woff2",
     "static/media/fa-v4compatibility.woff2": "/Emma_Matchmaking/static/media/fa-v4compatibility.e4340c52a50e727c6afa.woff2",
     "index.html": "/Emma_Matchmaking/index.html",
-    "main.8f20c319.css.map": "/Emma_Matchmaking/static/css/main.8f20c319.css.map",
+    "main.6e94f4b0.css.map": "/Emma_Matchmaking/static/css/main.6e94f4b0.css.map",
     "main.13feda18.js.map": "/Emma_Matchmaking/static/js/main.13feda18.js.map",
     "453.3b311a7a.chunk.js.map": "/Emma_Matchmaking/static/js/453.3b311a7a.chunk.js.map"
   },
   "entrypoints": [
-    "static/css/main.8f20c319.css",
+    "static/css/main.6e94f4b0.css",
     "static/js/main.13feda18.js"
   ]
 }
