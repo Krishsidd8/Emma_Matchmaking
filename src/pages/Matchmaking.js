@@ -206,9 +206,15 @@ function Matchmaking() {
   );
 
   const renderReveal = () => {
-    if (!user) return <div className="content-card"><h2>No submission found.</h2></div>;
-    return <div className="content-card"><h2>Matches Revealed</h2><pre>{JSON.stringify(fetchMyMatches(), null, 2)}</pre></div>;
+    if (!matches) return <div className="content-card"><h2>Matches are loading...</h2></div>;
+    return (
+      <div className="content-card">
+        <h2>Matches Revealed</h2>
+        <pre>{JSON.stringify(matches, null, 2)}</pre>
+      </div>
+    );
   };
+
 
   const renderContent = () => {
     switch(step) {
@@ -230,6 +236,28 @@ function Matchmaking() {
     </div>
   );
 }
+
+const handleCountdownFinish = async (bots) => {
+  const allUsers = [user, ...bots].filter(Boolean);
+
+  try {
+    const resp = await fetch(`${API_BASE}/run-matchmaking`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ users: allUsers, baseline: 0.3 }),
+    });
+    const data = await resp.json();
+    console.log("Matchmaking results:", data.results);
+    setMatches(data.results); // store in state
+    setStep("reveal");
+  } catch (err) {
+    console.error(err);
+    alert("Network error while running matchmaking");
+  }
+};
+
+// Then render the Countdown:
+{step === "waiting" && <Countdown onFinish={handleCountdownFinish} />}
 
 // --- QUESTIONS DATA ---
 const QUESTIONS = [

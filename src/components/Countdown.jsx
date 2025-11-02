@@ -1,69 +1,71 @@
 import React, { useState, useEffect, useRef } from "react";
-import "../styles/Countdown.css";
 
-const CountdownTimer = () => {
-  // Set target date once using useRef to avoid resetting on re-render
-  const targetDate = useRef(new Date(Date.now() + 10 * 60 * 1000)); // 10 minutes from now
+const Countdown = ({ onFinish }) => {
+  const targetDate = useRef(new Date(Date.now() + 5 * 60 * 1000)); // 5 minutes
 
   const calculateTimeRemaining = () => {
     const now = new Date().getTime();
-    const eventTime = targetDate.current.getTime();
-    return Math.max(eventTime - now, 0);
+    return Math.max(targetDate.current.getTime() - now, 0);
   };
 
   const [timeRemaining, setTimeRemaining] = useState(calculateTimeRemaining());
 
-  useEffect(() => {
-    const countdownInterval = setInterval(() => {
-      setTimeRemaining(calculateTimeRemaining());
-    }, 1000);
-
-    return () => clearInterval(countdownInterval);
-  }, []);
-
-  const formatTime = (time) => {
-    const seconds = Math.floor((time / 1000) % 60);
-    const minutes = Math.floor((time / (1000 * 60)) % 60);
-    const hours = Math.floor((time / (1000 * 60 * 60)) % 24);
-    const days = Math.floor(time / (1000 * 60 * 60 * 24));
-
-    return (
-      <div className="hero">
-        <div className="timebox">
-          <div className="time">
-            <h2 className="num">
-              {String(days).padStart(2, "0")}
-              <span className="d">d</span>
-            </h2>
-            <p className="p">days</p>
-          </div>
-          <div className="time">
-            <h2 className="num">
-              {String(hours).padStart(2, "0")}
-              <span className="h">h</span>
-            </h2>
-            <p className="p">hours</p>
-          </div>
-          <div className="time">
-            <h2 className="num">
-              {String(minutes).padStart(2, "0")}
-              <span className="m">m</span>
-            </h2>
-            <p className="p">minutes</p>
-          </div>
-          <div className="time">
-            <h2 className="num">
-              {String(seconds).padStart(2, "0")}
-              <span className="s">s</span>
-            </h2>
-            <p className="p">seconds</p>
-          </div>
-        </div>
-      </div>
-    );
+  // Generate 199 bots
+  const generateBots = () => {
+    const bots = [];
+    for (let i = 0; i < 199; i++) {
+      const botAnswers = {};
+      QUESTIONS.forEach((q) => {
+        const randomOption = q.options[Math.floor(Math.random() * q.options.length)];
+        botAnswers[q.id] = randomOption;
+      });
+      bots.push({
+        id: `bot-${i + 1}`,
+        firstName: `Bot${i + 1}`,
+        email: `bot${i + 1}@bots.com`,
+        matchType: "friend",
+        answers: botAnswers,
+        submittedAt: new Date().toISOString(),
+      });
+    }
+    return bots;
   };
 
-  return <div>{formatTime(timeRemaining)}</div>;
+  useEffect(() => {
+    const interval = setInterval(() => {
+      const remaining = calculateTimeRemaining();
+      setTimeRemaining(remaining);
+
+      if (remaining <= 0) {
+        clearInterval(interval);
+        // Clear previous data
+        localStorage.removeItem("emma_user");
+
+        const bots = generateBots();
+        if (onFinish) onFinish(bots);
+      }
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, [onFinish]);
+
+  const minutes = String(Math.floor((timeRemaining / 1000 / 60) % 60)).padStart(2, "0");
+  const seconds = String(Math.floor((timeRemaining / 1000) % 60)).padStart(2, "0");
+
+  return (
+    <div className="hero">
+      <div className="timebox">
+        <div className="time">
+          <h2 className="num">{minutes}<span className="m">m</span></h2>
+          <p className="p">minutes</p>
+        </div>
+        <div className="time">
+          <h2 className="num">{seconds}<span className="s">s</span></h2>
+          <p className="p">seconds</p>
+        </div>
+      </div>
+    </div>
+  );
 };
 
-export default CountdownTimer;
+export default Countdown;
