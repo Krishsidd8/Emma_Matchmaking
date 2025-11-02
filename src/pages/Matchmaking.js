@@ -97,7 +97,7 @@ function Matchmaking() {
       const matchResp = await fetch(`${API_BASE}/run-matchmaking`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ baseline: 0.3 }),
+        body: JSON.stringify({ baseline: 0.1 }),
       });
       const matchData = await matchResp.json();
 
@@ -126,7 +126,13 @@ function Matchmaking() {
   const renderReveal = () => (
     <div className="content-card">
       <h2>Matches Revealed</h2>
-      {matches ? <pre>{JSON.stringify(matches, null, 2)}</pre> : <p>Loading matches...</p>}
+      <div className="scroll-container">
+        {matches ? (
+          <pre>{JSON.stringify(matches, null, 2)}</pre>
+        ) : (
+          <p>Loading matches...</p>
+        )}
+      </div>
     </div>
   );
 
