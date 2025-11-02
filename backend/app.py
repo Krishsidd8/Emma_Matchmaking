@@ -189,29 +189,19 @@ def run_matchmaking():
         rows.append(row)
     df = pd.DataFrame(rows).set_index("id")
 
-    # Similarity helpers
     ids = df.index.tolist()
     sim_mat = pd.DataFrame(0.0, index=ids, columns=ids)
     gender_map = {u["uid"]: u.get("gender","") for u in users}
-    pref_map = {}
-    for u in users:
-        try:
-            pref_map[u["uid"]] = json.loads(u.get("preferred_genders") or "[]")
-        except:
-            pref_map[u["uid"]] = []
-
-    def to_numeric_choice(x):
-        return str(x).strip()
+    pref_map = {u["uid"]: json.loads(u.get("preferred_genders") or "[]") for u in users}
 
     def similarity_row(a_id, b_id):
-        A = df.loc[a_id]
-        B = df.loc[b_id]
+        A, B = df.loc[a_id], df.loc[b_id]
         if abs(int(A["grade"]) - int(B["grade"])) > 1:
             return 0.0
         if A["intent"] == "date" and B["intent"] == "date":
             if gender_map[b_id] not in pref_map[a_id] or gender_map[a_id] not in pref_map[b_id]:
                 return 0.0
-        matches = sum(to_numeric_choice(A[q]) == to_numeric_choice(B[q]) for q in questions)
+        matches = sum(str(A[q]).strip() == str(B[q]).strip() for q in questions)
         return matches / len(questions) if questions else 0.0
 
     for a,b in combinations(ids,2):
@@ -228,48 +218,64 @@ def run_matchmaking():
                 G.add_edge(a,b,weight=score)
         matching = nx.algorithms.matching.max_weight_matching(G, maxcardinality=True)
         pairs = [{"a": a, "b": b, "score": float(sim_mat.loc[a,b])} for a,b in matching]
-        return pairs
 
-    def form_groups_balanced(group_size=4, min_size=3, max_size=4):
-        group_users = [i for i in ids if df.loc[i]["intent"]=="group"]
+        # Identify unmatched users
+        paired_ids = {p["a"] for p in pairs} | {p["b"] for p in pairs}
+        unmatched = [uid for uid in subset if uid not in paired_ids]
+        return pairs, unmatched
+
+    # --- Run friends and dates ---
+    friend_pairs, unmatched_friends = optimal_pairing("friend")
+    date_pairs, unmatched_dates = optimal_pairing("date")
+
+    # --- Form groups ---
+    group_users = [i for i in ids if df.loc[i]["intent"]=="group"]
+    # Include unmatched users from friends/dates
+    group_users += unmatched_friends + unmatched_dates
+
+    def form_groups_balanced(group_users, group_size=4, min_size=3, max_size=4):
         n_users = len(group_users)
         if n_users < min_size:
-            return []
+            return [group_users] if group_users else []
 
         sim_sub = sim_mat.loc[group_users, group_users]
         dist = 1 - sim_sub.values
 
         if AgglomerativeClustering is None:
-            return [group_users[i:i+max_size] for i in range(0,len(group_users),max_size)]
+            groups = [group_users[i:i+max_size] for i in range(0,len(group_users),max_size)]
+        else:
+            n_clusters = math.ceil(n_users / group_size)
+            try:
+                model = AgglomerativeClustering(n_clusters=n_clusters, metric='precomputed', linkage='average')
+                labels = model.fit_predict(dist)
+            except TypeError:
+                model = AgglomerativeClustering(n_clusters=n_clusters, affinity='precomputed', linkage='average')
+                labels = model.fit_predict(dist)
+            groups_dict = defaultdict(list)
+            for uid, lab in zip(group_users, labels):
+                groups_dict[lab].append(uid)
+            groups = list(groups_dict.values())
 
-        n_clusters = math.ceil(n_users / group_size)
-        try:
-            model = AgglomerativeClustering(n_clusters=n_clusters, metric='precomputed', linkage='average')
-            labels = model.fit_predict(dist)
-        except TypeError:
-            model = AgglomerativeClustering(n_clusters=n_clusters, affinity='precomputed', linkage='average')
-            labels = model.fit_predict(dist)
+        # Merge small groups
+        small_groups = [g for g in groups if len(g) < min_size]
+        large_groups = [g for g in groups if len(g) >= min_size]
+        leftovers = [u for g in small_groups for u in g]
+        for g in large_groups:
+            while len(g) < max_size and leftovers:
+                g.append(leftovers.pop())
+        if leftovers:
+            large_groups.append(leftovers[:max_size])
+        return large_groups
 
-        groups_dict = defaultdict(list)
-        for uid, lab in zip(group_users, labels):
-            groups_dict[lab].append(uid)
-
-        # Simple balanced merging logic
-        balanced = []
-        for g in groups_dict.values():
-            if len(g) <= max_size:
-                balanced.append(g)
-            else:
-                for i in range(0,len(g),max_size):
-                    balanced.append(g[i:i+max_size])
-        return balanced
+    groups = form_groups_balanced(group_users)
 
     results = {
-        "friends": optimal_pairing("friend"),
-        "dates": optimal_pairing("date"),
-        "groups": form_groups_balanced()
+        "friends": friend_pairs,
+        "dates": date_pairs,
+        "groups": groups
     }
 
+    # --- Save to DB ---
     cur = get_db().cursor()
     cur.execute("INSERT INTO matches (created_at, match_type, payload) VALUES (?, ?, ?)",
                 (datetime.utcnow().isoformat(), "full_run", json.dumps(results)))
@@ -277,6 +283,7 @@ def run_matchmaking():
     match_id = cur.lastrowid
 
     return jsonify({"ok": True, "match_id": match_id, "results": results})
+
 
 @app.route("/api/latest-matches", methods=["GET"])
 def latest_matches():
