@@ -91,10 +91,6 @@ function Matchmaking() {
     }
 
     try {
-      // 1️⃣ Clear all previous submissions
-      const clearResp = await fetch(`${API_BASE}/clear-all`, { method: "POST" });
-      console.log("Clear all response:", await clearResp.json());
-
       // 2️⃣ Submit the real user
       const userResp = await fetch(`${API_BASE}/submit`, {
         method: "POST",
