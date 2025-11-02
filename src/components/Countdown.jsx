@@ -7,7 +7,7 @@ const Countdown = ({ onFinish }) => {
   const getTargetTime = () => {
     // Nov 2, 2025 at 9:25 AM PST/PDT
     // Month is 0-indexed in JS Date (10 = November)
-    const targetUTC = Date.UTC(2025, 10, 2, 16, 25, 0); 
+    const targetUTC = Date.UTC(2025, 10, 2, 16, 35, 0); 
     // 16:25 UTC = 9:25 AM PDT (-7)
     return targetUTC;
   };

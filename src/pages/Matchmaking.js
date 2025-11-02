@@ -140,7 +140,7 @@ function Matchmaking() {
       <h2>Your submission is saved.</h2>
       <p>Waiting for matchmaking...</p>
       <Countdown
-        targetDate="2025-11-02T08:00:00-08:00" // Fixed: 8AM PST on Nov 2, 2025
+        targetDate="2025-11-02T09:35:00-08:00" // Fixed: 8AM PST on Nov 2, 2025
         onFinish={runMatchmaking}
       />
     </div>
@@ -152,37 +152,40 @@ function Matchmaking() {
     return (
       <div className="content-card">
         <h2>Your Match</h2>
-        {matchedUser ? (
-          <div>
-            <p>
-              <strong>Name:</strong> {matchedUser.first_name} {matchedUser.last_name}
-            </p>
-            <p>
-              <strong>Grade:</strong> {matchedUser.grade}
-            </p>
-            <p>
-              <strong>Email:</strong> {matchedUser.email}
-            </p>
-            <p>
-              <strong>Gender:</strong> {matchedUser.gender}
-            </p>
-            <p>
-              <strong>Matched Questions:</strong>
-            </p>
-            <ul>
-              {Object.entries(user.answers || {})
-                .filter(([qid, ans]) => matchedUser.answers && matchedUser.answers[qid] === ans)
-                .map(([qid, ans]) => (
-                  <li key={qid}>{`Q${qid}: ${ans}`}</li>
-                ))}
-            </ul>
-          </div>
-        ) : (
-          <p>Loading your match...</p>
-        )}
+        <div className="scroll-container">
+          {matchedUser ? (
+            <div>
+              <p>
+                <strong>Name:</strong> {matchedUser.first_name} {matchedUser.last_name}
+              </p>
+              <p>
+                <strong>Grade:</strong> {matchedUser.grade}
+              </p>
+              <p>
+                <strong>Email:</strong> {matchedUser.email}
+              </p>
+              <p>
+                <strong>Gender:</strong> {matchedUser.gender}
+              </p>
+              <p>
+                <strong>Matched Questions:</strong>
+              </p>
+              <ul>
+                {Object.entries(user.answers || {})
+                  .filter(([qid, ans]) => matchedUser.answers && matchedUser.answers[qid] === ans)
+                  .map(([qid, ans]) => (
+                    <li key={qid}>{`Q${qid}: ${ans}`}</li>
+                  ))}
+              </ul>
+            </div>
+          ) : (
+            <p>Loading your match...</p>
+          )}
+        </div>
       </div>
     );
   };
+
 
   const renderContent = () => {
     switch (step) {
