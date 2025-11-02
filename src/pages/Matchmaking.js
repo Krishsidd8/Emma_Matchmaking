@@ -54,6 +54,31 @@ function Matchmaking() {
     }
   };
 
+  // --- Add this function ---
+  const renderDatePreferences = () => (
+    <div className="content-card">
+      <h2>Select Your Preferred Genders</h2>
+      <div className="scroll-container">
+        {["male", "female", "other"].map((gender) => (
+          <label key={gender}>
+            <input
+              type="checkbox"
+              checked={form.preferredGenders.includes(gender)}
+              onChange={(e) => {
+                const newPrefs = e.target.checked
+                  ? [...form.preferredGenders, gender]
+                  : form.preferredGenders.filter((g) => g !== gender);
+                setForm({ ...form, preferredGenders: newPrefs });
+              }}
+            />
+            {gender.charAt(0).toUpperCase() + gender.slice(1)}
+          </label>
+        ))}
+      </div>
+      <button onClick={() => setStep("questions")}>Continue</button>
+    </div>
+  );
+
   const handleSelectMatchType = (type) => {
     setMatchType(type);
     setStep(type === "date" ? "datePreferences" : "questions");
@@ -233,6 +258,8 @@ function Matchmaking() {
             <button onClick={() => handleSelectMatchType("group")}>Group</button>
           </div>
         );
+      case "dataPreference":
+        return renderDatePreferences();
       case "questions":
         return (
           <div className="content-card">
