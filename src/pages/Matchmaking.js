@@ -4,7 +4,7 @@ import "../styles/Fonts.css";
 import Navbar from "../components/Navbar";
 import InteractiveGrid from "../animation/InteractiveGrid";
 import Countdown from "../components/Countdown";
-import { QUESTIONS } from "../components/Questions";
+import QUESTIONS from "../components/Questions";
 
 const API_BASE = process.env.REACT_APP_API_BASE || "https://emmamatchmaking-production.up.railway.app/api";
 
