@@ -28,6 +28,33 @@ function Matchmaking() {
   const [loginEmail, setLoginEmail] = useState("");
   const [step, setStep] = useState("login");
 
+  // --- Sync user from backend on mount ---
+  useEffect(() => {
+    if (!user) return;
+
+    const fetchUser = async () => {
+      try {
+        const resp = await fetch(`${API_BASE}/check-email?email=${user.email}`);
+        const data = await resp.json();
+        if (data.exists) {
+          const latestUser = data.user;
+          setUser(latestUser);
+          localStorage.setItem("emma_user", JSON.stringify(latestUser));
+          setStep(latestUser.submitted_at ? "waiting" : "matchType");
+        } else {
+          // User removed from backend
+          localStorage.removeItem("emma_user");
+          setUser(null);
+          setStep("signup");
+        }
+      } catch (err) {
+        console.error("Error fetching user:", err);
+      }
+    };
+
+    fetchUser();
+  }, []); // run only on mount
+
   // --- Login handler ---
   const handleLogin = async () => {
     if (!loginEmail.endsWith("@students.esuhsd.org")) {
@@ -71,9 +98,10 @@ function Matchmaking() {
       const data = await resp.json();
       if (!data.ok) return alert(data.error || "Signup failed");
 
-      setUser(data.user);
-      localStorage.setItem("emma_user", JSON.stringify(data.user));
-      setStep(data.user.submittedAt ? "waiting" : "matchType");
+      const userData = { ...data.user, submitted_at: data.user.submitted_at || null };
+      setUser(userData);
+      localStorage.setItem("emma_user", JSON.stringify(userData));
+      setStep(userData.submitted_at ? "waiting" : "matchType");
     } catch (err) {
       console.error(err);
       alert("Network error during signup");
@@ -125,7 +153,9 @@ function Matchmaking() {
       const data = await resp.json();
       if (!data.ok) return alert(data.error || "Submission failed");
 
-      setUser({ ...user, submitted_at: new Date().toISOString() });
+      const updatedUser = { ...user, submitted_at: new Date().toISOString() };
+      setUser(updatedUser);
+      localStorage.setItem("emma_user", JSON.stringify(updatedUser));
       setStep("waiting");
     } catch (err) {
       console.error(err);
@@ -133,6 +163,7 @@ function Matchmaking() {
     }
   };
 
+  // --- Run matchmaking ---
   const runMatchmaking = async () => {
     try {
       const matchResp = await fetch(`${API_BASE}/run-matchmaking`, {
@@ -141,7 +172,20 @@ function Matchmaking() {
         body: JSON.stringify({ baseline: 0.1 }),
       });
       const matchData = await matchResp.json();
-      setMatches(matchData.results);
+      setMatches(matchData.results || { friends: [], dates: [], groups: [] });
+
+      // Fetch my match after matchmaking
+      const myMatchResp = await fetch(`${API_BASE}/my-match?email=${user.email}`);
+      const myMatchData = await myMatchResp.json();
+      if (myMatchData.ok) {
+        const matched = (myMatchData.match?.dates?.[0]?.a === `user${user.id}` ? myMatchData.match.dates[0].b : 
+                         myMatchData.match?.dates?.[0]?.b === `user${user.id}` ? myMatchData.match.dates[0].a :
+                         myMatchData.match?.friends?.[0]?.a === `user${user.id}` ? myMatchData.match.friends[0].b :
+                         myMatchData.match?.friends?.[0]?.b === `user${user.id}` ? myMatchData.match.friends[0].a :
+                         null);
+        setMatchedUser(matched ? matchedUser : null); // optional
+      }
+
       setStep("reveal");
     } catch (err) {
       console.error("Error during matchmaking:", err);
@@ -149,31 +193,34 @@ function Matchmaking() {
     }
   };
 
-  // --- Waiting screen ---
+  // --- Render waiting screen ---
   const renderWaiting = () => (
     <div className="content-card">
       <h2>Waiting for matchmaking...</h2>
       <Countdown
-        targetDate="2025-11-03T23:35:00-08:00"
+        targetDate="2025-11-04T00:05:00-08:00"
         onFinish={runMatchmaking}
       />
     </div>
   );
 
-  // --- Reveal matches ---
-  const renderReveal = () => (
-    <div className="content-card">
-      <h2>Your Match</h2>
-      {matchedUser ? (
-        <div>
-          <p>{matchedUser.first_name} {matchedUser.last_name}</p>
-          <p>{matchedUser.email}</p>
-        </div>
-      ) : (
-        <p>No match yet.</p>
-      )}
-    </div>
-  );
+  // --- Render matches ---
+  const renderReveal = () => {
+    if (!matches) return <p>Loading matches...</p>;
+    return (
+      <div className="content-card">
+        <h2>Your Match</h2>
+        {matchedUser ? (
+          <div>
+            <p><strong>Name:</strong> {matchedUser.first_name} {matchedUser.last_name}</p>
+            <p><strong>Grade:</strong> {matchedUser.grade}</p>
+            <p><strong>Email:</strong> {matchedUser.email}</p>
+            <p><strong>Gender:</strong> {matchedUser.gender}</p>
+          </div>
+        ) : <p>No match found.</p>}
+      </div>
+    );
+  };
 
   // --- Main content renderer ---
   const renderContent = () => {
@@ -194,21 +241,9 @@ function Matchmaking() {
         return (
           <div className="content-card">
             <h2>Sign Up</h2>
-            <input
-              placeholder="First Name"
-              value={form.firstName}
-              onChange={(e) => setForm({ ...form, firstName: e.target.value })}
-            />
-            <input
-              placeholder="Last Name"
-              value={form.lastName}
-              onChange={(e) => setForm({ ...form, lastName: e.target.value })}
-            />
-            <input
-              placeholder="Student Email"
-              value={form.email}
-              onChange={(e) => setForm({ ...form, email: e.target.value })}
-            />
+            <input placeholder="First Name" value={form.firstName} onChange={(e) => setForm({ ...form, firstName: e.target.value })}/>
+            <input placeholder="Last Name" value={form.lastName} onChange={(e) => setForm({ ...form, lastName: e.target.value })}/>
+            <input placeholder="Student Email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })}/>
             <select value={form.grade} onChange={(e) => setForm({ ...form, grade: e.target.value })}>
               <option value="">Select Grade</option>
               <option>9th</option>
@@ -262,21 +297,16 @@ function Matchmaking() {
             <button onClick={handleSubmit}>Submit</button>
           </div>
         );
-      case "waiting":
-        return renderWaiting();
-      case "reveal":
-        return renderReveal();
-      default:
-        return null;
+      case "waiting": return renderWaiting();
+      case "reveal": return renderReveal();
+      default: return null;
     }
   };
 
   return (
     <div className="appheader">
       <InteractiveGrid />
-      <nav className="navbar">
-        <Navbar />
-      </nav>
+      <nav className="navbar"><Navbar /></nav>
       {renderContent()}
     </div>
   );

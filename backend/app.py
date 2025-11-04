@@ -8,8 +8,6 @@ import pandas as pd
 import numpy as np
 from itertools import combinations
 import networkx as nx
-import math
-from collections import defaultdict
 
 # Optional: sklearn clustering for groups
 try:
@@ -101,17 +99,14 @@ def check_email():
     user_row = cur.fetchone()
     if not user_row:
         return jsonify({"exists": False})
-    
+
     cur.execute("SELECT qid, answer FROM answers WHERE user_id = ?", (user_row["id"],))
     answers = {str(r["qid"]): r["answer"] for r in cur.fetchall()}
 
     user_data = dict(user_row)
     user_data["answers"] = answers
-    # Parse preferred_genders to array for frontend
     user_data["preferred_genders"] = json.loads(user_data.get("preferred_genders") or "[]")
     return jsonify({"exists": True, "user": user_data})
-
-
 
 @app.route("/api/signup", methods=["POST"])
 def signup():
@@ -131,14 +126,23 @@ def signup():
     cur.execute("SELECT id FROM users WHERE email = ?", (email,))
     r = cur.fetchone()
     if r:
+        # User exists: update info
         uid = r["id"]
+        cur.execute("""
+            UPDATE users
+            SET first_name = ?, last_name = ?, grade = ?, gender = ?, preferred_genders = ?
+            WHERE id = ?
+        """, (first, last, grade, gender, preferred_genders, uid))
     else:
         cur.execute("""
             INSERT INTO users (email, first_name, last_name, grade, gender, preferred_genders)
             VALUES (?, ?, ?, ?, ?, ?)
         """, (email, first, last, grade, gender, preferred_genders))
-        db.commit()
         uid = cur.lastrowid
+    db.commit()
+
+    cur.execute("SELECT submitted_at FROM users WHERE id = ?", (uid,))
+    submitted_at = cur.fetchone()["submitted_at"]
 
     return jsonify({"ok": True, "user": {
         "id": uid,
@@ -147,8 +151,8 @@ def signup():
         "email": email,
         "grade": grade,
         "gender": gender,
-        "preferred_genders": preferred_genders,
-        "submittedAt": None
+        "preferred_genders": json.loads(preferred_genders),
+        "submitted_at": submitted_at
     }})
 
 @app.route("/api/submit", methods=["POST"])
@@ -168,15 +172,17 @@ def submit_answers():
     if not row:
         return jsonify({"ok": False, "error": "user not found"}), 404
     uid = row["id"]
-    if row["submitted_at"]:
-        return jsonify({"ok": False, "error": "already submitted"}), 409
 
+    # Save/update answers
     for qid_str, ans in answers.items():
         try:
             qid = int(qid_str)
         except:
             continue
-        cur.execute("INSERT INTO answers (user_id, qid, answer) VALUES (?, ?, ?)", (uid, qid, ans))
+        cur.execute("""
+            INSERT INTO answers (user_id, qid, answer)
+            VALUES (?, ?, ?)
+        """, (uid, qid, ans))
     submitted_at = datetime.utcnow().isoformat()
     cur.execute("UPDATE users SET match_type = ?, submitted_at = ? WHERE id = ?", (match_type, submitted_at, uid))
     db.commit()
@@ -189,20 +195,16 @@ def run_matchmaking():
 
     users = fetch_all_users_with_answers()
     if not users:
-        return jsonify({"ok": True, "matches": {}})
+        return jsonify({"ok": True, "results": {}})
 
-    # Map DB IDs to uid strings
     for u in users:
         u["uid"] = f"user{u['id']}"
 
     questions = sorted({k for u in users for k in u["answers"].keys()})
     rows = []
     for u in users:
-        row = {
-            "id": u["uid"],
-            "grade": int(u["grade"].replace("th","").replace("rd","").replace("st","")) if isinstance(u["grade"], str) else int(u["grade"]),
-            "intent": u.get("match_type")
-        }
+        grade_int = int(u["grade"].replace("th", "").replace("rd", "").replace("st", "")) if isinstance(u["grade"], str) else int(u["grade"])
+        row = {"id": u["uid"], "grade": grade_int, "intent": u.get("match_type")}
         for q in questions:
             row[q] = u["answers"].get(q, "")
         rows.append(row)
@@ -211,7 +213,7 @@ def run_matchmaking():
     ids = df.index.tolist()
     sim_mat = pd.DataFrame(0.0, index=ids, columns=ids)
     gender_map = {u["uid"]: u.get("gender","") for u in users}
-    pref_map = {u["uid"]: json.loads(u.get("preferred_genders") or "[]") for u in users}
+    pref_map = {u["uid"]: u.get("preferred_genders", []) for u in users}
 
     def similarity_row(a_id, b_id):
         A, B = df.loc[a_id], df.loc[b_id]
@@ -237,81 +239,47 @@ def run_matchmaking():
                 G.add_edge(a,b,weight=score)
         matching = nx.algorithms.matching.max_weight_matching(G, maxcardinality=True)
         pairs = [{"a": a, "b": b, "score": float(sim_mat.loc[a,b])} for a,b in matching]
-
-        # Identify unmatched users
         paired_ids = {p["a"] for p in pairs} | {p["b"] for p in pairs}
         unmatched = [uid for uid in subset if uid not in paired_ids]
         return pairs, unmatched
 
-    # --- Run friends and dates ---
     friend_pairs, unmatched_friends = optimal_pairing("friend")
     date_pairs, unmatched_dates = optimal_pairing("date")
+    group_users = [i for i in ids if df.loc[i]["intent"]=="group"] + unmatched_friends + unmatched_dates
 
-    # --- Form groups ---
-    group_users = [i for i in ids if df.loc[i]["intent"]=="group"]
-    # Include unmatched users from friends/dates
-    group_users += unmatched_friends + unmatched_dates
-
-    def form_groups_balanced(group_users, min_size=3, max_size=4):
-        if not group_users:
-            return []
-
+    # Form balanced groups
+    def form_groups_balanced(users, min_size=3, max_size=4):
+        if not users: return []
         groups = []
-        temp = list(group_users)
-
-        # Shuffle so merging is more random (optional)
+        temp = list(users)
         np.random.shuffle(temp)
-
-        # Make groups of max_size
         while len(temp) >= max_size:
             groups.append(temp[:max_size])
             temp = temp[max_size:]
-
-        # Handle leftovers
         while temp:
             if len(temp) >= min_size:
                 groups.append(temp[:max_size])
                 temp = temp[max_size:]
             else:
-                # Add leftover users to existing groups that have < max_size
                 added = False
                 for g in groups:
                     while len(g) < max_size and temp:
                         g.append(temp.pop(0))
                         added = True
                 if not added:
-                    # If still leftover and no group can take them, make a new small group
                     groups.append(temp[:])
                     temp = []
-
         return groups
 
     groups = form_groups_balanced(group_users)
+    results = {"friends": friend_pairs, "dates": date_pairs, "groups": groups}
 
-    results = {
-        "friends": friend_pairs,
-        "dates": date_pairs,
-        "groups": groups
-    }
-
-    # --- Save to DB ---
     cur = get_db().cursor()
     cur.execute("INSERT INTO matches (created_at, match_type, payload) VALUES (?, ?, ?)",
                 (datetime.utcnow().isoformat(), "full_run", json.dumps(results)))
     get_db().commit()
     match_id = cur.lastrowid
-
     return jsonify({"ok": True, "match_id": match_id, "results": results})
-
-
-@app.route("/api/latest-matches", methods=["GET"])
-def latest_matches():
-    cur = get_db().cursor()
-    cur.execute("SELECT id, created_at, payload FROM matches ORDER BY id DESC LIMIT 1")
-    row = cur.fetchone()
-    if not row:
-        return jsonify({"ok": True, "matches": None})
-    return jsonify({"ok": True, "matches": json.loads(row["payload"]), "created_at": row["created_at"], "id": row["id"]})
 
 @app.route("/api/my-match", methods=["GET"])
 def my_match():
@@ -340,7 +308,6 @@ def my_match():
         if uid in grp:
             found["groups"].append(grp)
     return jsonify({"ok": True, "user": dict(user), "match": found})
-
 
 if __name__ == "__main__":
     app.run(debug=True, host="0.0.0.0", port=int(os.environ.get("PORT",5000)))
