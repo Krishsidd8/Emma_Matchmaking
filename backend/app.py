@@ -94,27 +94,21 @@ def fetch_all_users_with_answers():
 # --- Endpoints ---
 @app.route("/api/check-email", methods=["GET"])
 def check_email():
-    email_or_id = request.args.get("email", "").strip().lower()
+    email = request.args.get("email", "").strip().lower()
     db = get_db()
     cur = db.cursor()
-    
-    # Determine if it's an email or an ID
-    if email_or_id.isdigit():
-        cur.execute("SELECT * FROM users WHERE id = ?", (int(email_or_id),))
-    else:
-        cur.execute("SELECT * FROM users WHERE email = ?", (email_or_id,))
-    
+    cur.execute("SELECT * FROM users WHERE email = ?", (email,))
     user_row = cur.fetchone()
     if not user_row:
         return jsonify({"exists": False})
     
-    # Fetch answers
     cur.execute("SELECT qid, answer FROM answers WHERE user_id = ?", (user_row["id"],))
     answers = {str(r["qid"]): r["answer"] for r in cur.fetchall()}
 
     user_data = dict(user_row)
     user_data["answers"] = answers
-
+    # Parse preferred_genders to array for frontend
+    user_data["preferred_genders"] = json.loads(user_data.get("preferred_genders") or "[]")
     return jsonify({"exists": True, "user": user_data})
 
 

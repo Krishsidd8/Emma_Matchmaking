@@ -9,7 +9,6 @@ import QUESTIONS from "../components/Questions";
 const API_BASE = process.env.REACT_APP_API_BASE || "https://emmamatchmaking-production.up.railway.app/api";
 
 function Matchmaking() {
-  const [step, setStep] = useState("signup"); // signup → matchType → questions → waiting → reveal
   const [matchType, setMatchType] = useState("");
   const [form, setForm] = useState({
     firstName: "",
@@ -23,6 +22,36 @@ function Matchmaking() {
   const [user, setUser] = useState(() => JSON.parse(localStorage.getItem("emma_user")) || null);
   const [matches, setMatches] = useState(null);
   const [matchedUser, setMatchedUser] = useState(null);
+
+
+  const [loginEmail, setLoginEmail] = useState("");
+  const [step, setStep] = useState("login");
+
+  const handleLogin = async () => {
+    if (!loginEmail.endsWith("@students.esuhsd.org")) {
+      alert("Enter a valid student email");
+      return;
+    }
+    try {
+      const resp = await fetch(`${API_BASE}/check-email?email=${loginEmail}`);
+      const data = await resp.json();
+      if (data.exists) {
+        setUser(data.user);
+        localStorage.setItem("emma_user", JSON.stringify(data.user));
+        if (data.user.submitted_at) {
+          setStep("waiting"); // already submitted
+        } else {
+          setStep("matchType"); // not submitted yet
+        }
+      } else {
+        setForm({ ...form, email: loginEmail });
+        setStep("signup"); // new user → sign up
+      }
+    } catch (err) {
+      console.error(err);
+      alert("Network error");
+    }
+  };
 
   // --- API Helpers ---
   const handleSignup = async () => {
@@ -180,7 +209,7 @@ function Matchmaking() {
       <h2>Your submission is saved.</h2>
       <p>Waiting for matchmaking...</p>
       <Countdown
-        targetDate="2025-11-02T16:00:00-08:00" // 1PM PST on Nov 2, 2025
+        targetDate="2025-11-06T18:00:00-08:00" // 6PM PST on Nov 6, 2025
         onFinish={runMatchmaking}
       />
     </div>
@@ -229,6 +258,18 @@ function Matchmaking() {
 
   const renderContent = () => {
     switch (step) {
+      case "login":
+        return (
+          <div className="content-card">
+            <h2>Enter Your Student Email</h2>
+            <input
+              placeholder="Student Email"
+              value={loginEmail}
+              onChange={(e) => setLoginEmail(e.target.value)}
+            />
+            <button onClick={handleLogin}>Continue</button>
+          </div>
+        );
       case "signup":
         return (
           <div className="content-card">
@@ -313,6 +354,7 @@ function Matchmaking() {
         return null;
     }
   };
+
 
   return (
     <div className="appheader">
