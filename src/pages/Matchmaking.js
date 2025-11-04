@@ -20,15 +20,13 @@ function Matchmaking() {
   });
   const [answers, setAnswers] = useState({});
   const [user, setUser] = useState(() => {
-    // Only fetch user for later use, but don't auto-redirect
     const stored = localStorage.getItem("emma_user");
     return stored ? JSON.parse(stored) : null;
   });
   const [matches, setMatches] = useState(null);
   const [matchedUser, setMatchedUser] = useState(null);
-
   const [loginEmail, setLoginEmail] = useState("");
-  const [step, setStep] = useState("login"); // Always start at login
+  const [step, setStep] = useState("login");
 
   // --- Login handler ---
   const handleLogin = async () => {
@@ -42,15 +40,10 @@ function Matchmaking() {
       if (data.exists) {
         setUser(data.user);
         localStorage.setItem("emma_user", JSON.stringify(data.user));
-
-        if (data.user.submitted_at) {
-          setStep("waiting"); // Already submitted → countdown
-        } else {
-          setStep("matchType"); // Not submitted yet → match type
-        }
+        setStep(data.user.submitted_at ? "waiting" : "matchType");
       } else {
         setForm({ ...form, email: loginEmail });
-        setStep("signup"); // New user → signup
+        setStep("signup");
       }
     } catch (err) {
       console.error(err);
@@ -76,23 +69,94 @@ function Matchmaking() {
         body: JSON.stringify(form),
       });
       const data = await resp.json();
-
       if (!data.ok) return alert(data.error || "Signup failed");
 
-      const existingUser = data.user;
-      setUser(existingUser);
-      localStorage.setItem("emma_user", JSON.stringify(existingUser));
-
-      setStep(existingUser.submittedAt ? "waiting" : "matchType");
+      setUser(data.user);
+      localStorage.setItem("emma_user", JSON.stringify(data.user));
+      setStep(data.user.submittedAt ? "waiting" : "matchType");
     } catch (err) {
       console.error(err);
       alert("Network error during signup");
     }
   };
 
-  // --- Rest of handlers remain the same (handleSelectMatchType, handleSubmit, runMatchmaking) ---
+  // --- Match type selection ---
+  const handleSelectMatchType = (type) => {
+    setMatchType(type);
+    if (type === "date") {
+      setStep("datePreferences");
+    } else {
+      setStep("questions");
+    }
+  };
 
-  // --- UI render ---
+  // --- Render date preferences ---
+  const renderDatePreferences = () => (
+    <div className="content-card">
+      <h2>Select Preferred Genders</h2>
+      {["male", "female", "other"].map((g) => (
+        <label key={g}>
+          <input
+            type="checkbox"
+            checked={form.preferredGenders.includes(g)}
+            onChange={(e) => {
+              const newPrefs = e.target.checked
+                ? [...form.preferredGenders, g]
+                : form.preferredGenders.filter((p) => p !== g);
+              setForm({ ...form, preferredGenders: newPrefs });
+            }}
+          />
+          {g.charAt(0).toUpperCase() + g.slice(1)}
+        </label>
+      ))}
+      <button onClick={() => setStep("questions")}>Continue</button>
+    </div>
+  );
+
+  // --- Submit answers ---
+  const handleSubmit = async () => {
+    if (!matchType) return alert("Select a match type first!");
+    try {
+      const resp = await fetch(`${API_BASE}/submit`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: user.email, matchType, answers }),
+      });
+      const data = await resp.json();
+      if (!data.ok) return alert(data.error || "Submission failed");
+
+      setUser({ ...user, submitted_at: new Date().toISOString() });
+      setStep("waiting");
+    } catch (err) {
+      console.error(err);
+      alert("Network error");
+    }
+  };
+
+  // --- Waiting screen ---
+  const renderWaiting = () => (
+    <div className="content-card">
+      <h2>Waiting for matchmaking...</h2>
+      <Countdown targetDate="2025-11-06T18:00:00-08:00" />
+    </div>
+  );
+
+  // --- Reveal matches ---
+  const renderReveal = () => (
+    <div className="content-card">
+      <h2>Your Match</h2>
+      {matchedUser ? (
+        <div>
+          <p>{matchedUser.first_name} {matchedUser.last_name}</p>
+          <p>{matchedUser.email}</p>
+        </div>
+      ) : (
+        <p>No match yet.</p>
+      )}
+    </div>
+  );
+
+  // --- Main content renderer ---
   const renderContent = () => {
     switch (step) {
       case "login":
