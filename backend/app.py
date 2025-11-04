@@ -39,7 +39,21 @@ def close_connection(exception):
 def init_db():
     with sqlite3.connect(DB_PATH) as db:
         cur = db.cursor()
-        # Users table
+
+        cur.execute("""
+        CREATE TABLE IF NOT EXISTS users (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            first_name TEXT,
+            last_name TEXT,
+            email TEXT UNIQUE,
+            grade TEXT,
+            gender TEXT,
+            preferred_genders TEXT,
+            match_type TEXT,
+            submitted_at TEXT
+        );
+        """)
+
         cur.execute("""
         CREATE TABLE IF NOT EXISTS user_submissions (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -55,29 +69,30 @@ def init_db():
             answers TEXT,
             FOREIGN KEY(user_id) REFERENCES users(id)
         );
-    """)
+        """)
 
-        # Answers table
         cur.execute("""
-            CREATE TABLE IF NOT EXISTS answers (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                user_id INTEGER NOT NULL,
-                qid INTEGER NOT NULL,
-                answer TEXT,
-                FOREIGN KEY(user_id) REFERENCES users(id)
-            );
+        CREATE TABLE IF NOT EXISTS answers (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            user_id INTEGER NOT NULL,
+            qid INTEGER NOT NULL,
+            answer TEXT,
+            FOREIGN KEY(user_id) REFERENCES users(id)
+        );
         """)
-        # Matches table
+
         cur.execute("""
-            CREATE TABLE IF NOT EXISTS matches (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                created_at TEXT,
-                match_type TEXT,
-                payload TEXT
-            );
+        CREATE TABLE IF NOT EXISTS matches (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            created_at TEXT,
+            match_type TEXT,
+            payload TEXT
+        );
         """)
+
         db.commit()
     print(f"Initialized DB at {DB_PATH}")
+
 
 init_db()
 
