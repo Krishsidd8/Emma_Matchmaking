@@ -154,7 +154,6 @@ input[type="radio"] {
   color: #2f1c1c;
 }
 
-/* Reveal output */
 .reveal pre {
   background-color: var(--color-medium);
   padding: 1rem;
@@ -166,54 +165,44 @@ input[type="radio"] {
 /* Mobile adjustments */
 @media (max-width: 768px) {
   .content-card {
+    position: relative;
+    top: auto;
+    left: auto;
+    transform: none;
+    margin: 5rem auto 2rem;
     width: 90%;
-    padding: 1rem; /* smaller padding */
-    top: 45%; /* move slightly down so navbar is not covered */
-    transform: translate(-50%, -45%);
-    font-size: 0.9rem; /* smaller text */
+    max-width: 95%;
+    padding: 1rem;
+    background-color: rgba(255, 255, 255, 0.85);
+    box-shadow: 0 0.25rem 0.75rem rgba(0,0,0,0.1);
   }
 
+  /*
   .content-card h1,
   .content-card h2 {
     font-size: 1.2rem;
     margin-bottom: 0.5rem;
   }
+    
 
   .content-card p {
     font-size: 1rem;
     line-height: 1.4;
   }
+  */
 
   .scroll-container {
-    max-height: 50vh; /* shrink scroll container */
-    padding: 0.5rem;
-    margin-bottom: 0.5rem;
+    max-height: 50vh;
+    overflow-y: auto;
   }
 
   input,
-  select {
-    font-size: 0.9rem;
-    padding: 0.5rem 0.75rem;
-  }
-
-  button {
-    font-size: 0.75rem;
-    padding: 0.5rem 1rem;
-  }
-
-  .question p {
+  select, button {
     font-size: 0.9rem;
   }
 
   label {
     font-size: 0.85rem;
-    color: #000 !important; 
   }
-  .scroll-container label {
-    color: #2f1c1c;
-  }
-
-  .content-card {
-    background-color: rgba(255, 255, 255, 0.8);
-  }
+  
 }

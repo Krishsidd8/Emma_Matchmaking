@@ -207,24 +207,69 @@
   transform: scale(1.3);
 }
 
+@media (max-width: 768px) {
+  .about-big-box {
+    padding: 1.5rem;
+    margin: 2rem 1rem;
+    height: auto;
+  }
 
-/* Scroll container only on mobile */
+  .about-section {
+    position: relative;
+    flex-direction: column;
+    top: auto;
+    left: auto;
+    transform: none;
+    padding: 1.25rem;
+    margin: 1rem 0;
+    width: 100%;
+    max-height: none;
+    overflow: visible;
+  }
+
+  .about-text h1 {
+    font-size: 1.6rem;
+  }
+
+  .about-text p {
+    font-size: 1rem;
+    line-height: 1.5rem;
+  }
+
+  .about-image img {
+    max-width: 250px;
+    margin: 1rem auto 0;
+  }
+
+  .arrow {
+    top: 90%;
+    transform: none;
+    background: rgba(255,255,255,0.8);
+  }
+
+  .carousel-dots {
+    bottom: 10px;
+  }
+}
+
+
+/*
 @media (max-width: 600px) {
   .about-big-box {
-    position: relative; /* ensure children are positioned relative to this */
+    position: relative;
     padding: 0;
     margin: 0;
-    height: 160vh; /* full viewport height so vertical centering works */
+    height: 160vh;
     display: flex;
     justify-content: center;
     align-items: center;
   }
 
   .about-section {
-    position: absolute; /* allows top/left + transform to work */
+    position: absolute;
     top: 35%;
     left: 35%;
-    transform: translate(-50%, -50%); /* perfectly center */
+    transform: translate(-50%, -50%);
     border: 1px solid rgba(255, 255, 255, 0.3);
     border-radius: 20px;
     background-color: rgba(255, 255, 255, 0.2);
@@ -260,3 +305,4 @@
     height: auto;
   }
 }
+*/
