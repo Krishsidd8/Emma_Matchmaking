@@ -185,6 +185,24 @@ def submit_answers():
         """, (uid, qid, ans))
     submitted_at = datetime.utcnow().isoformat()
     cur.execute("UPDATE users SET match_type = ?, submitted_at = ? WHERE id = ?", (match_type, submitted_at, uid))
+    
+    cur.execute("""
+        INSERT INTO user_submissions (
+            user_id, first_name, last_name, email, grade, gender, preferred_genders, match_type, submitted_at, answers
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    """, (
+        uid,
+        row["first_name"],
+        row["last_name"],
+        row["email"],
+        row["grade"],
+        row["gender"],
+        row["preferred_genders"],
+        match_type,
+        submitted_at,
+        json.dumps(answers)
+    ))
+    
     db.commit()
     return jsonify({"ok": True, "user_id": uid})
 
