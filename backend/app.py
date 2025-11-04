@@ -221,7 +221,7 @@ def run_matchmaking():
         if abs(int(A["grade"]) - int(B["grade"])) > 1:
             return 0.0
         if A["intent"] == "date" and B["intent"] == "date":
-            if gender_map[b_id] not in pref_map[a_id] or gender_map[a_id] not in pref_map[b_id]:
+            if gender_map[b_id] not in pref_map[a_id]:
                 return 0.0
         matches = sum(str(A[q]).strip() == str(B[q]).strip() for q in questions)
         return matches / len(questions) if questions else 0.0
