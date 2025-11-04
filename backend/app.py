@@ -203,6 +203,7 @@ def submit_answers():
         json.dumps(answers)
     ))
     
+    
     db.commit()
     return jsonify({"ok": True, "user_id": uid})
 
