@@ -64,7 +64,7 @@
   background: none;
   border: none;
   cursor: pointer;
-  padding: 0 1rem 0 0; /* 👈 adds right padding */
+  padding: 0 1rem 0 0;
   z-index: 1100;
 }
 
@@ -88,6 +88,10 @@
   transform: rotate(-45deg) translateY(-8px);
 }
 
+
+.menu-toggle {
+  display: none;
+}
 /* Responsive dropdown */
 @media (max-width: 700px) {
   .navbar-inner {
