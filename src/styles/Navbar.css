@@ -2,10 +2,14 @@
   padding: 0.75rem 1rem;
   position: fixed;
   top: 0;
-  z-index: 10;
-  width: 97.5%;
+  z-index: 1000;
+  width: 100%;
+  background-color: rgba(255, 255, 255, 0.4);
+  backdrop-filter: blur(15px);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.25);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  transition: background 0.3s ease, box-shadow 0.3s ease;
 }
-
 
 .navbar-inner {
   display: grid;
@@ -13,15 +17,14 @@
   align-items: center;
   width: 100%;
   gap: 1rem;
-  padding-top: 5px;
 }
 
-/* Center title — no absolute positioning anymore */
+/* Centered title */
 .logo {
-  grid-column: 2;              /* place in center column */
-  justify-self: center;        /* center horizontally in that column */
+  grid-column: 2;
+  justify-self: center;
   font-size: 1.8rem;
-  color: var(--color-darkest);
+  color: var(--color-darkest, #333);
   font-weight: 700;
   text-align: center;
   white-space: nowrap;
@@ -29,66 +32,113 @@
   text-shadow: 0 2px 8px rgba(255, 180, 180, 0.3);
 }
 
-/* Right side nav links */
+/* Desktop navigation links */
 .pages {
-  grid-column: 3;              /* right column */
-  justify-self: end;           /* push links to the far right */
+  grid-column: 3;
+  justify-self: end;
   display: flex;
   gap: 1rem;
   align-items: center;
+  transition: all 0.3s ease;
 }
 
-/* If you want a small left-side element later (e.g., logo icon), it goes in column 1 */
-.left-slot {
-  grid-column: 1;
-  justify-self: start;
-  display: flex;
-  align-items: center;
-  gap: 0.6rem;
-}
-
-/* Links */
 .nav-link {
-  position: relative;
   font-size: 1rem;
   text-decoration: none;
-  color: #444;
+  color: #333;
   padding: 0.4rem 0.8rem;
   border-radius: 0.75rem;
   transition: all 0.25s ease;
 }
 
 .nav-link:hover {
-  background-color: rgba(255, 255, 255, 0.2);
-  backdrop-filter: blur(10px);
-  border: 1px solid rgba(255, 255, 255, 0.3);
-  box-shadow: 0 0.5rem 1.5rem rgba(0, 0, 0, 0.1);
+  background-color: rgba(255, 255, 255, 0.35);
+  backdrop-filter: blur(8px);
+  border: 1px solid rgba(255, 255, 255, 0.25);
   transform: translateY(-2px);
-  font-weight: 600
+  font-weight: 600;
 }
 
+/* === Mobile view === */
+.menu-toggle {
+  display: none;
+  flex-direction: column;
+  justify-content: space-between;
+  width: 28px;
+  height: 22px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  z-index: 1100;
+}
 
-/* Responsive: stack vertically on narrow screens */
+/* Hamburger bars */
+.bar {
+  height: 3px;
+  width: 100%;
+  background: #333;
+  border-radius: 3px;
+  transition: all 0.3s ease;
+}
+
+/* Toggle to X animation */
+.menu-toggle.open .bar:nth-child(1) {
+  transform: rotate(45deg) translateY(8px);
+}
+.menu-toggle.open .bar:nth-child(2) {
+  opacity: 0;
+}
+.menu-toggle.open .bar:nth-child(3) {
+  transform: rotate(-45deg) translateY(-8px);
+}
+
+/* Responsive dropdown */
 @media (max-width: 700px) {
   .navbar-inner {
+    grid-template-columns: auto 1fr auto;
+  }
+
+  .menu-toggle {
     display: flex;
+    justify-self: end;
+  }
+
+  .pages {
+    position: absolute;
+    top: 100%;
+    right: 0;
+    background: rgba(255, 255, 255, 0.7);
+    backdrop-filter: blur(20px);
+    border-bottom-left-radius: 1rem;
+    border-bottom-right-radius: 1rem;
     flex-direction: column;
-    align-items: center;
-    gap: 0.5rem;
+    align-items: flex-start;
+    width: 100%;
+    padding: 0 1.5rem;
+    max-height: 0;
+    overflow: hidden;
+    opacity: 0;
+    pointer-events: none;
+    transform: translateY(-10px);
+    transition: all 0.35s ease;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
   }
 
-  .left-slot,
-  .pages {
-    justify-self: center;
-    grid-column: auto;
+  .pages.open {
+    max-height: 300px;
+    opacity: 1;
+    pointer-events: auto;
+    transform: translateY(0);
   }
 
-  .pages {
-    flex-wrap: wrap;
-    gap: 0.5rem;
+  .nav-link {
+    width: 100%;
+    padding: 0.75rem 0;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.05);
   }
 
-  .logo {
-    grid-column: auto;
+  .logo h1 {
+    font-size: 1.4rem;
   }
 }

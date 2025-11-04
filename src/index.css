@@ -19,6 +19,11 @@ body {
 }
 
 
+main, .page-container {
+  padding-top: 4.5rem;
+}
+
+
 code {
   font-family: source-code-pro, Menlo, Monaco, Consolas, "Courier New",
     monospace;
