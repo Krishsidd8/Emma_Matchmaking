@@ -247,6 +247,7 @@ def submit_answers():
 def run_matchmaking():
     payload = request.json or {}
     baseline = float(payload.get("baseline", 0.0))
+
     print("=== RUNNING MATCHMAKING ===")
     print(f"Baseline: {baseline}")
 
@@ -254,31 +255,35 @@ def run_matchmaking():
     print(f"Fetched {len(users)} users with answers")
 
     if not users:
-        print("No users found for matching")
         return jsonify({"ok": True, "results": {}})
 
-    # --- Normalize users ---
+    # Normalize users
     for u in users:
         u["uid"] = f"user{u['id']}"
         u["match_type"] = str(u.get("match_type") or "").lower()
         u["gender"] = (u.get("gender") or "").lower()
+
+        # parse preferred genders
         pref_raw = u.get("preferred_genders") or []
+        pref_list = []
+
         if isinstance(pref_raw, str):
             try:
-                pref_list = json.loads(pref_raw) if pref_raw else []
+                pref_list = json.loads(pref_raw)
             except Exception:
-                pref_list = []
+                # fallback: comma-separated string
+                pref_list = [x.strip() for x in pref_raw.split(",") if x.strip()]
         elif isinstance(pref_raw, list):
             pref_list = pref_raw
-        else:
-            pref_list = []
+
         u["preferred_genders"] = [str(x).lower() for x in pref_list]
         print(f"User {u['uid']}: intent={u['match_type']}, gender={u['gender']}, preferred={u['preferred_genders']}")
 
-    # --- Prepare questions & DataFrame ---
+    # questions set
     questions = sorted({k for u in users for k in u["answers"].keys()})
-    print(f"Questions IDs: {questions}")
+    print("Questions IDs:", questions)
 
+    # create DataFrame for similarity calculation
     rows = []
     for u in users:
         try:
@@ -292,74 +297,79 @@ def run_matchmaking():
         for q in questions:
             row[q] = u["answers"].get(q, "")
         rows.append(row)
+
     df = pd.DataFrame(rows).set_index("id")
     print("User DataFrame for similarity calculation:\n", df)
 
     ids = df.index.tolist()
     if not ids:
-        print("No IDs found in DataFrame")
         return jsonify({"ok": True, "results": {"friends": [], "dates": [], "groups": []}})
 
+    # build similarity matrix
     sim_mat = pd.DataFrame(0.0, index=ids, columns=ids)
     gender_map = {u["uid"]: u["gender"] for u in users}
     pref_map = {u["uid"]: u["preferred_genders"] for u in users}
 
-    # --- Similarity calculation ---
+    def accepts(preferences, gender):
+        # empty preference = accept anyone
+        return not preferences or gender in preferences
+
     def similarity_row(a_id, b_id):
         A, B = df.loc[a_id], df.loc[b_id]
-        # grade check
+
+        # grade proximity
         try:
             if abs(int(A["grade"]) - int(B["grade"])) > 1:
-                print(f"{a_id}-{b_id} fail grade proximity")
                 return 0.0
         except Exception:
             pass
 
-        # date intent: check mutual preference
+        # check mutual date preferences
         if str(A.get("intent") or "").lower() == "date" and str(B.get("intent") or "").lower() == "date":
             ga, gb = gender_map.get(a_id, ""), gender_map.get(b_id, "")
-            pref_a, pref_b = pref_map.get(a_id, []) or [], pref_map.get(b_id, []) or []
-            pref_a, pref_b = [str(x).lower() for x in pref_a], [str(x).lower() for x in pref_b]
-            if (gb not in pref_a) or (ga not in pref_b):
+            pref_a, pref_b = pref_map.get(a_id, []), pref_map.get(b_id, [])
+            pref_a = [str(x).lower() for x in pref_a]
+            pref_b = [str(x).lower() for x in pref_b]
+
+            if not (accepts(pref_a, gb) and accepts(pref_b, ga)):
                 print(f"{a_id}-{b_id} fail mutual date preference: ga={ga}, gb={gb}, pref_a={pref_a}, pref_b={pref_b}")
                 return 0.0
 
+        # count exact answer matches
         if not questions:
             return 1.0
         matches = sum(str(A[q]).strip() == str(B[q]).strip() for q in questions)
-        score = matches / len(questions) if questions else 0.0
-        print(f"Similarity {a_id}-{b_id} = {score}")
-        return score
+        return matches / len(questions)
 
     for a, b in combinations(ids, 2):
         s = similarity_row(a, b)
         sim_mat.loc[a, b] = s
         sim_mat.loc[b, a] = s
+        print(f"Similarity {a}-{b} = {s}")
 
     print("Similarity matrix:\n", sim_mat)
 
-    # --- Pairing function ---
+    # pairing function
     def optimal_pairing(intent_name, baseline_val=baseline):
-        subset = [i for i in ids if str(df.loc[i]["intent"]).lower() == intent_name.lower()]
-        print(f"Pairing for '{intent_name}' with subset={subset}")
+        subset = [i for i in ids if str(df.loc[i]["intent"]).lower() == str(intent_name).lower()]
         G = nx.Graph()
         for a, b in combinations(subset, 2):
             score = sim_mat.loc[a, b]
             if score >= baseline_val:
                 G.add_edge(a, b, weight=score)
         matching = nx.algorithms.matching.max_weight_matching(G, maxcardinality=True)
-        print(f"Matches found for '{intent_name}': {matching}")
         pairs = [{"a": a, "b": b, "score": float(sim_mat.loc[a, b])} for a, b in matching]
         paired_ids = {p["a"] for p in pairs} | {p["b"] for p in pairs}
         unmatched = [uid for uid in subset if uid not in paired_ids]
-        print(f"Unmatched users for '{intent_name}': {unmatched}")
         return pairs, unmatched
 
+    # run pairings
     friend_pairs, unmatched_friends = optimal_pairing("friend")
     date_pairs, unmatched_dates = optimal_pairing("date")
 
-    # --- Groups ---
-    matched_users = set(p["a"] for p in friend_pairs + date_pairs) | set(p["b"] for p in friend_pairs + date_pairs)
+    matched_users = {p["a"] for p in friend_pairs + date_pairs} | {p["b"] for p in friend_pairs + date_pairs}
+
+    # group users
     group_claims = [i for i in ids if str(df.loc[i]["intent"]).lower() == "group" and i not in matched_users]
     group_users = group_claims + [u for u in unmatched_friends if u not in matched_users] + [u for u in unmatched_dates if u not in matched_users]
 
@@ -388,14 +398,17 @@ def run_matchmaking():
         return groups
 
     groups = form_groups_balanced(group_users)
-    print(f"Groups formed: {groups}")
 
     results = {"friends": friend_pairs, "dates": date_pairs, "groups": groups}
+
     cur = get_db().cursor()
-    cur.execute("INSERT INTO matches (created_at, match_type, payload) VALUES (?, ?, ?)",
-                (datetime.utcnow().isoformat(), "full_run", json.dumps(results)))
+    cur.execute(
+        "INSERT INTO matches (created_at, match_type, payload) VALUES (?, ?, ?)",
+        (datetime.utcnow().isoformat(), "full_run", json.dumps(results))
+    )
     get_db().commit()
     match_id = cur.lastrowid
+
     print(f"Matchmaking complete, match_id={match_id}")
     return jsonify({"ok": True, "match_id": match_id, "results": results})
 

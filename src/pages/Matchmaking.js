@@ -155,7 +155,12 @@ function Matchmaking() {
       const resp = await fetch(`${API_BASE}/submit`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: user.email, matchType, answers }),
+        body: JSON.stringify({
+          email: user.email,
+          matchType,
+          answers,
+          preferredGenders: form.preferredGenders, // <-- add this
+        }),
       });
       const data = await resp.json();
       if (!data.ok) return alert(data.error || "Submission failed");
