@@ -309,5 +309,17 @@ def my_match():
             found["groups"].append(grp)
     return jsonify({"ok": True, "user": dict(user), "match": found})
 
-if __name__ == "__main__":
+@app.route("/api/user/<int:user_id>", methods=["GET"])
+def get_user_by_id(user_id):
+    cur = get_db().cursor()
+    cur.execute("SELECT * FROM users WHERE id = ?", (user_id,))
+    user = cur.fetchone()
+    if not user:
+        return jsonify({"ok": False, "error": "user not found"}), 404
+    user_data = dict(user)
+    cur.execute("SELECT qid, answer FROM answers WHERE user_id = ?", (user_id,))
+    user_data["answers"] = {r["qid"]: r["answer"] for r in cur.fetchall()}
+    return jsonify({"ok": True, "user": user_data})
+
+if __name__ == "__main__":    
     app.run(debug=True, host="0.0.0.0", port=int(os.environ.get("PORT",5000)))

@@ -173,6 +173,7 @@ function Matchmaking() {
   // --- Run matchmaking ---
   const runMatchmaking = async () => {
     try {
+      // Run full matchmaking algorithm
       const matchResp = await fetch(`${API_BASE}/run-matchmaking`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -181,16 +182,29 @@ function Matchmaking() {
       const matchData = await matchResp.json();
       setMatches(matchData.results || { friends: [], dates: [], groups: [] });
 
-      // Fetch my match after matchmaking
+      // Get my specific match
       const myMatchResp = await fetch(`${API_BASE}/my-match?email=${user.email}`);
       const myMatchData = await myMatchResp.json();
-      if (myMatchData.ok) {
-        const matched = (myMatchData.match?.dates?.[0]?.a === `user${user.id}` ? myMatchData.match.dates[0].b : 
-                         myMatchData.match?.dates?.[0]?.b === `user${user.id}` ? myMatchData.match.dates[0].a :
-                         myMatchData.match?.friends?.[0]?.a === `user${user.id}` ? myMatchData.match.friends[0].b :
-                         myMatchData.match?.friends?.[0]?.b === `user${user.id}` ? myMatchData.match.friends[0].a :
-                         null);
-        setMatchedUser(matched || null);
+
+      if (myMatchData.ok && myMatchData.match) {
+        const matchObj =
+          myMatchData.match.dates?.[0] ||
+          myMatchData.match.friends?.[0] ||
+          null;
+
+        if (matchObj) {
+          const matchedIdStr =
+            matchObj.a === `user${user.id}` ? matchObj.b : matchObj.a;
+          const matchedId = parseInt(matchedIdStr.replace("user", ""), 10);
+
+          // Fetch full info of the matched user by ID
+          const matchedUserResp = await fetch(`${API_BASE}/user/${matchedId}`);
+          const matchedUserData = await matchedUserResp.json();
+
+          if (matchedUserData.ok) {
+            setMatchedUser(matchedUserData.user);
+          }
+        }
       }
 
       setStep("reveal");
@@ -199,6 +213,8 @@ function Matchmaking() {
       alert("Something went wrong during matchmaking. Check console.");
     }
   };
+
+
 
   // --- Render waiting screen ---
   const renderWaiting = () => (
