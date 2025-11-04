@@ -137,7 +137,7 @@ function Matchmaking() {
   const renderWaiting = () => (
     <div className="content-card">
       <h2>Waiting for matchmaking...</h2>
-      <Countdown targetDate="2025-11-06T18:00:00-08:00" />
+      <Countdown targetDate="2025-11-03T23:05:00-08:00" />
     </div>
   );
 

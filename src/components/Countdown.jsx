@@ -5,11 +5,11 @@ import "../styles/Countdown.css";
 const Countdown = ({ onFinish }) => {
   // Returns target timestamp in milliseconds (UTC)
   const getTargetTime = () => {
-    // Nov 6, 2025 at 6:00 PM PST/PDT
-    // Month is 0-indexed in JS Date (10 = November)
-    const targetUTC = Date.UTC(2025, 10, 6, 26, 0, 0);
-    return targetUTC;
+    // Nov 3, 2025 at 11:05 PM PST
+    // Month is 0-indexed in JS Date constructor
+    return new Date(Date.UTC(2025, 10, 4, 7, 5, 0)); // UTC equivalent of 23:05 PST
   };
+
 
   const [timeRemaining, setTimeRemaining] = useState(() => Math.max(getTargetTime() - Date.now(), 0));
 
