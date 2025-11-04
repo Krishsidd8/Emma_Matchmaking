@@ -133,11 +133,28 @@ function Matchmaking() {
     }
   };
 
+  const runMatchmaking = async () => {
+    try {
+      const matchResp = await fetch(`${API_BASE}/run-matchmaking`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ baseline: 0.1 }),
+      });
+      const matchData = await matchResp.json();
+      setMatches(matchData.results);
+      setStep("reveal");
+    } catch (err) {
+      console.error("Error during matchmaking:", err);
+      alert("Something went wrong during matchmaking. Check console.");
+    }
+  };
+
   // --- Waiting screen ---
   const renderWaiting = () => (
     <div className="content-card">
       <h2>Waiting for matchmaking...</h2>
       <Countdown targetDate="2025-11-03T23:05:00-08:00" />
+      onFinish={runMatchmaking}
     </div>
   );
 
