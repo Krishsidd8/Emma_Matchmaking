@@ -203,7 +203,7 @@ def run_matchmaking():
     questions = sorted({k for u in users for k in u["answers"].keys()})
     rows = []
     for u in users:
-        grade_int = int(u["grade"].replace("th", "").replace("rd", "").replace("st", "")) if isinstance(u["grade"], str) else int(u["grade"])
+        grade_int = int(u["grade"].replace("th", "").replace("rd", "").replace("st", ""))
         row = {"id": u["uid"], "grade": grade_int, "intent": u.get("match_type")}
         for q in questions:
             row[q] = u["answers"].get(q, "")
@@ -213,7 +213,8 @@ def run_matchmaking():
     ids = df.index.tolist()
     sim_mat = pd.DataFrame(0.0, index=ids, columns=ids)
     gender_map = {u["uid"]: u.get("gender","") for u in users}
-    pref_map = {u["uid"]: u.get("preferred_genders", []) for u in users}
+    pref_map = {u["uid"]: json.loads(u.get("preferred_genders") or "[]") for u in users}
+
 
     def similarity_row(a_id, b_id):
         A, B = df.loc[a_id], df.loc[b_id]
