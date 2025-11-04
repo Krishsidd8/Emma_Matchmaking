@@ -41,19 +41,22 @@ def init_db():
         cur = db.cursor()
         # Users table
         cur.execute("""
-            CREATE TABLE IF NOT EXISTS users (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                first_name TEXT,
-                last_name TEXT,
-                email TEXT UNIQUE,
-                grade TEXT,
-                gender TEXT,
-                preferred_genders TEXT,
-                submitted_at TEXT,
-                match_type TEXT,
-                answers TEXT
-            );
-        """)
+        CREATE TABLE IF NOT EXISTS user_submissions (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            user_id INTEGER,
+            first_name TEXT,
+            last_name TEXT,
+            email TEXT,
+            grade TEXT,
+            gender TEXT,
+            preferred_genders TEXT,
+            match_type TEXT,
+            submitted_at TEXT,
+            answers TEXT,
+            FOREIGN KEY(user_id) REFERENCES users(id)
+        );
+    """)
+
         # Answers table
         cur.execute("""
             CREATE TABLE IF NOT EXISTS answers (
@@ -167,11 +170,16 @@ def submit_answers():
 
     db = get_db()
     cur = db.cursor()
-    cur.execute("SELECT id, submitted_at FROM users WHERE email = ?", (email,))
+    cur.execute("SELECT * FROM users WHERE email = ?", (email,))
     row = cur.fetchone()
     if not row:
         return jsonify({"ok": False, "error": "user not found"}), 404
-    uid = row["id"]
+
+    # Convert sqlite3.Row to a dict
+    row_dict = dict(row)
+
+    uid = row_dict["id"]
+
 
     # Save/update answers
     for qid_str, ans in answers.items():
@@ -192,18 +200,18 @@ def submit_answers():
         ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     """, (
         uid,
-        row["first_name"],
-        row["last_name"],
-        row["email"],
-        row["grade"],
-        row["gender"],
-        row["preferred_genders"],
+        row_dict["first_name"],
+        row_dict["last_name"],
+        row_dict["email"],
+        row_dict["grade"],
+        row_dict["gender"],
+        row_dict["preferred_genders"],
         match_type,
         submitted_at,
         json.dumps(answers)
     ))
     
-    
+
     db.commit()
     return jsonify({"ok": True, "user_id": uid})
 
