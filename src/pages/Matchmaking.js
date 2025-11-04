@@ -30,6 +30,13 @@ function Matchmaking() {
 
   // --- Sync user from backend on mount ---
   useEffect(() => {
+    // Always start at the login page when matchmaking is opened
+    setUser(null);
+    setStep("login");
+    localStorage.removeItem("emma_user");
+  }, []); 
+  /*
+  useEffect(() => {
     if (!user) return;
 
     const fetchUser = async () => {
@@ -54,7 +61,7 @@ function Matchmaking() {
 
     fetchUser();
   }, []); // run only on mount
-
+  */
   // --- Login handler ---
   const handleLogin = async () => {
     if (!loginEmail.endsWith("@students.esuhsd.org")) {
@@ -183,7 +190,7 @@ function Matchmaking() {
                          myMatchData.match?.friends?.[0]?.a === `user${user.id}` ? myMatchData.match.friends[0].b :
                          myMatchData.match?.friends?.[0]?.b === `user${user.id}` ? myMatchData.match.friends[0].a :
                          null);
-        setMatchedUser(matched ? matchedUser : null); // optional
+        setMatchedUser(matched || null);
       }
 
       setStep("reveal");
@@ -198,7 +205,7 @@ function Matchmaking() {
     <div className="content-card">
       <h2>Waiting for matchmaking...</h2>
       <Countdown
-        targetDate="2025-11-04T00:05:00-08:00"
+        targetDate="2025-11-04T00:15:00-08:00"
         onFinish={runMatchmaking}
       />
     </div>
