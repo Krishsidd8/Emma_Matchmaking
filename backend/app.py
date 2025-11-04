@@ -146,7 +146,16 @@ def signup():
         db.commit()
         uid = cur.lastrowid
 
-    return jsonify({"ok": True, "user_id": uid})
+    return jsonify({"ok": True, "user": {
+        "id": uid,
+        "first_name": first,
+        "last_name": last,
+        "email": email,
+        "grade": grade,
+        "gender": gender,
+        "preferred_genders": preferred_genders,
+        "submittedAt": None
+    }})
 
 @app.route("/api/submit", methods=["POST"])
 def submit_answers():

@@ -42,12 +42,22 @@ function Matchmaking() {
         body: JSON.stringify(form),
       });
       const data = await resp.json();
-      if (!data.ok) return alert(data.error || "Signup failed");
 
-      const newUser = { ...form, id: data.user_id };
-      setUser(newUser);
-      localStorage.setItem("emma_user", JSON.stringify(newUser));
-      setStep("matchType");
+      if (!data.ok) {
+        return alert(data.error || "Signup failed");
+      }
+
+      const existingUser = data.user; // returned from backend
+
+      setUser(existingUser);
+      localStorage.setItem("emma_user", JSON.stringify(existingUser));
+
+      // Decide which step based on submission status
+      if (existingUser.submittedAt) {
+        setStep("waiting"); // already submitted → go to countdown
+      } else {
+        setStep("matchType"); // not submitted → continue form
+      }
     } catch (err) {
       console.error(err);
       alert("Network error during signup");
@@ -90,6 +100,7 @@ function Matchmaking() {
       alert("Complete all fields and select a match type");
       return;
     }
+
     try {
       const resp = await fetch(`${API_BASE}/submit`, {
         method: "POST",
@@ -99,15 +110,21 @@ function Matchmaking() {
       const data = await resp.json();
       if (!data.ok) return alert(data.error || "Submission failed");
 
-      const newUser = { ...user, submittedAt: new Date().toISOString(), matchType, answers };
+      const newUser = {
+        ...user,
+        submittedAt: new Date().toISOString(),
+        matchType,
+        answers,
+      };
       setUser(newUser);
       localStorage.setItem("emma_user", JSON.stringify(newUser));
-      setStep("waiting");
+      setStep("waiting"); // after submission → countdown
     } catch (err) {
       console.error(err);
       alert("Network error during submission");
     }
   };
+
 
   // --- Bots & Matchmaking ---
   const runMatchmaking = async () => {
@@ -128,36 +145,34 @@ function Matchmaking() {
 
   // --- Fetch matched user ---
   useEffect(() => {
-    if (!matches || !user?.id) return;
+    if (!user) return;
 
-    // Find the matched ID
-    const myMatch = matches?.dates?.find(
-      (p) => p.a === `user${user.id}` || p.b === `user${user.id}`
-    ) || matches?.friends?.find(
-      (p) => p.a === `user${user.id}` || p.b === `user${user.id}`
-    );
-
-    const matchedId = myMatch
-      ? myMatch.a === `user${user.id}` ? myMatch.b : myMatch.a
-      : null;
-
-    if (!matchedId) return;
-
-    // Extract numeric ID
-    const matchedNumericId = matchedId.replace("user", "");
-
-    // Fetch full user info with answers
-    fetch(`${API_BASE}/check-email?email=${matchedNumericId}`)
+    // Fetch latest info in case user already exists
+    fetch(`${API_BASE}/check-email?email=${user.email}`)
       .then((res) => res.json())
       .then((data) => {
-        if (data.exists) setMatchedUser(data.user);
-        else setMatchedUser(null);
+        if (data.exists) {
+          const latestUser = data.user;
+          setUser(latestUser);
+          localStorage.setItem("emma_user", JSON.stringify(latestUser));
+
+          if (latestUser.submittedAt) {
+            setStep("waiting"); // already submitted
+          } else {
+            setStep("matchType"); // not submitted
+          }
+        } else {
+          // User somehow removed, reset
+          localStorage.removeItem("emma_user");
+          setUser(null);
+          setStep("signup");
+        }
       })
       .catch((err) => {
-        console.error("Error fetching matched user:", err);
-        setMatchedUser(null);
+        console.error(err);
       });
-  }, [matches, user]);
+  }, []);
+
 
   // --- UI Render ---
   const renderWaiting = () => (
