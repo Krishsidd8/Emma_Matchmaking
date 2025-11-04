@@ -226,7 +226,7 @@ function Matchmaking() {
     <div className="content-card">
       <h2>Waiting for matchmaking...</h2>
       <Countdown
-        targetDate = "2025-11-04T15:25:00-08:00"
+        targetDate = "2025-11-04T15:50:00-08:00"
         onFinish={runMatchmaking}
       />
     </div>
@@ -235,6 +235,28 @@ function Matchmaking() {
   // --- Render matches ---
   const renderReveal = () => {
     if (!matches) return <p>Loading matches...</p>;
+
+    // If it's a group match (array of members)
+    if (matches.type === "group" && Array.isArray(matches.members)) {
+      return (
+        <div className="content-card">
+          <h2>Your Group</h2>
+          <p>You’ve been matched with the following group members:</p>
+          <ul className="group-member-list">
+            {matches.members.map((member, idx) => (
+              <li key={idx} className="member-item">
+                <p><strong>Name:</strong> {member.first_name} {member.last_name}</p>
+                <p><strong>Grade:</strong> {member.grade}</p>
+                <p><strong>Email:</strong> {member.email}</p>
+                <p><strong>Gender:</strong> {member.gender}</p>
+              </li>
+            ))}
+          </ul>
+        </div>
+      );
+    }
+
+    // Otherwise, show single-person match (friend/date)
     return (
       <div className="content-card">
         <h2>Your Match</h2>
@@ -245,10 +267,13 @@ function Matchmaking() {
             <p><strong>Email:</strong> {matchedUser.email}</p>
             <p><strong>Gender:</strong> {matchedUser.gender}</p>
           </div>
-        ) : <p>No match found.</p>}
+        ) : (
+          <p>No match found.</p>
+        )}
       </div>
     );
   };
+
 
   // --- Main content renderer ---
   const renderContent = () => {

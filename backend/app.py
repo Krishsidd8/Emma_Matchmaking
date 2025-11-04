@@ -370,76 +370,142 @@ def run_matchmaking():
     matched_users = {p["a"] for p in friend_pairs + date_pairs} | {p["b"] for p in friend_pairs + date_pairs}
 
     # group users
-    group_claims = [i for i in ids if str(df.loc[i]["intent"]).lower() == "group" and i not in matched_users]
-    group_users = group_claims + [u for u in unmatched_friends if u not in matched_users] + [u for u in unmatched_dates if u not in matched_users]
+    group_users = [u for u in ids if str(df.loc[u]["intent"]).lower() == "group"]
+    print(f"Found {len(group_users)} group users: {group_users}")
 
-    def form_groups_balanced(users_list, min_size=3, max_size=4):
-        if not users_list:
-            return []
-        groups = []
-        temp = list(users_list)
-        np.random.shuffle(temp)
-        while len(temp) >= max_size:
-            groups.append(temp[:max_size])
-            temp = temp[max_size:]
-        while temp:
-            if len(temp) >= min_size:
-                groups.append(temp[:max_size])
-                temp = temp[max_size:]
-            else:
-                added = False
-                for g in groups:
-                    while len(g) < max_size and temp:
-                        g.append(temp.pop(0))
-                        added = True
-                if not added:
-                    groups.append(temp[:])
-                    temp = []
-        return groups
+    group_results = []
 
-    groups = form_groups_balanced(group_users)
+    if group_users:
+        # Extract only group subset similarity matrix
+        submat = sim_mat.loc[group_users, group_users]
 
-    results = {"friends": friend_pairs, "dates": date_pairs, "groups": groups}
+        if AgglomerativeClustering and len(group_users) >= 3:
+            # Estimate cluster count: ~4–5 users per group
+            n_groups = max(1, len(group_users) // 4)
+            model = AgglomerativeClustering(
+                n_clusters=n_groups,
+                affinity="euclidean",
+                linkage="average"
+            )
+            features = submat.values
+            np.fill_diagonal(features, 1.0)
+            model.fit(features)
+            labels = model.labels_
 
-    cur = get_db().cursor()
+            # build groups by label
+            for label in np.unique(labels):
+                members = [group_users[i] for i, l in enumerate(labels) if l == label]
+                group_results.append({"members": members})
+        else:
+            # fallback grouping (no sklearn or too few users)
+            temp = group_users.copy()
+            while len(temp) > 0:
+                chunk = temp[:4]  # groups of 4
+                temp = temp[4:]
+                group_results.append({"members": chunk})
+
+    print(f"Formed {len(group_results)} groups: {group_results}")
+
+    db = get_db()
+    cur = db.cursor()
     cur.execute(
         "INSERT INTO matches (created_at, match_type, payload) VALUES (?, ?, ?)",
-        (datetime.utcnow().isoformat(), "full_run", json.dumps(results))
+        (datetime.utcnow().isoformat(), "auto", json.dumps({
+            "friends": friend_pairs,
+            "dates": date_pairs,
+            "groups": group_results
+        }))
     )
-    get_db().commit()
-    match_id = cur.lastrowid
+    db.commit()
 
-    print(f"Matchmaking complete, match_id={match_id}")
-    return jsonify({"ok": True, "match_id": match_id, "results": results})
+    return jsonify({
+            "ok": True,
+            "results": {
+                "friends": friend_pairs,
+                "dates": date_pairs,
+                "groups": group_results
+            }
+        })
 
 
-@app.route("/api/my-match", methods=["GET"])
+@app.route("/api/my-match")
 def my_match():
-    email = request.args.get("email", "").strip().lower()
+    email = request.args.get("email")
     if not email:
         return jsonify({"ok": False, "error": "missing email"}), 400
-    cur = get_db().cursor()
-    cur.execute("SELECT * FROM users WHERE email = ?", (email,))
-    user = cur.fetchone()
+
+    db = get_db()
+    cur = db.cursor()
+    user = cur.execute(
+        "SELECT id, name, intent FROM users WHERE email = ?", (email,)
+    ).fetchone()
     if not user:
         return jsonify({"ok": False, "error": "user not found"}), 404
-    uid = f"user{user['id']}"
-    cur.execute("SELECT payload FROM matches ORDER BY id DESC LIMIT 1")
-    row = cur.fetchone()
-    if not row:
-        return jsonify({"ok": True, "user": dict(user), "match": None})
-    payload = json.loads(row["payload"])
-    found = {"friends": [], "dates": [], "groups": []}
-    for p in payload.get("friends", []):
-        if p["a"] == uid or p["b"] == uid:
-            found["friends"].append(p)
-    for p in payload.get("dates", []):
-        if p["a"] == uid or p["b"] == uid:
-            found["dates"].append(p)
-    for grp in payload.get("groups", []):
-        if uid in grp:
-            found["groups"].append(grp)
-    return jsonify({"ok": True, "user": dict(user), "match": found})
+
+    user_id = user["id"]
+    user_intent = user["intent"]
+
+    match = cur.execute(
+        "SELECT * FROM matches ORDER BY created_at DESC LIMIT 1"
+    ).fetchone()
+    if not match:
+        return jsonify({"ok": False, "match": None})
+
+    data = json.loads(match["payload"])
+
+    # === handle friend/date pairings ===
+    for pair in data.get("friends", []) + data.get("dates", []):
+        if pair["a"] == user_id or pair["b"] == user_id:
+            other_id = pair["b"] if pair["a"] == user_id else pair["a"]
+            other = cur.execute(
+                "SELECT name, grade, email, gender, intent FROM users WHERE id = ?",
+                (other_id,),
+            ).fetchone()
+            if other:
+                return jsonify({
+                    "ok": True,
+                    "match": {
+                        "type": user_intent,
+                        "name": other["name"],
+                        "grade": other["grade"],
+                        "email": other["email"],
+                        "gender": other["gender"],
+                    },
+                })
+
+    # === handle group clusters ===
+    for group in data.get("groups", []):
+        members = group.get("members", [])
+        if user_id in members:
+            # Get all other members
+            placeholders = ",".join("?" * len(members))
+            rows = cur.execute(
+                f"SELECT name, grade, email, gender FROM users WHERE id IN ({placeholders})",
+                tuple(members),
+            ).fetchall()
+
+            # Make sure we show everyone (including the requester)
+            group_list = [
+                {
+                    "name": r["name"],
+                    "grade": r["grade"],
+                    "email": r["email"],
+                    "gender": r["gender"],
+                }
+                for r in rows
+            ]
+
+            return jsonify({
+                "ok": True,
+                "match": {
+                    "type": "group",
+                    "members": group_list
+                },
+            })
+
+    # === no match found ===
+    return jsonify({"ok": True, "match": None})
+
 
 @app.route("/api/user/<int:user_id>", methods=["GET"])
 def get_user_by_id(user_id):

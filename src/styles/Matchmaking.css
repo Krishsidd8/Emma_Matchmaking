@@ -162,6 +162,21 @@ input[type="radio"] {
   color: var(--color-darkest);
 }
 
+.group-member-list {
+  list-style: none;
+  padding: 0;
+  margin-top: 1rem;
+}
+
+.member-item {
+  background: #f8f8f8;
+  padding: 12px;
+  border-radius: 10px;
+  margin-bottom: 10px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+
+
 /* Mobile adjustments */
 @media (max-width: 768px) {
   .content-card {
