@@ -1,3 +1,4 @@
+# app.py (replace your existing file with this)
 import os
 import sqlite3
 import json
@@ -80,7 +81,6 @@ def init_db():
             FOREIGN KEY(user_id) REFERENCES users(id)
         );
         """)
-
         cur.execute("""
         CREATE TABLE IF NOT EXISTS matches (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -89,10 +89,8 @@ def init_db():
             payload TEXT
         );
         """)
-
         db.commit()
     print(f"Initialized DB at {DB_PATH}")
-
 
 init_db()
 
@@ -105,6 +103,16 @@ def fetch_all_users_with_answers():
     for u in users:
         cur.execute("SELECT qid, answer FROM answers WHERE user_id = ?", (u["id"],))
         u["answers"] = {int(r["qid"]): r["answer"] for r in cur.fetchall()}
+        # normalize preferred_genders for downstream use
+        pref_raw = u.get("preferred_genders")
+        if isinstance(pref_raw, str):
+            try:
+                u["preferred_genders"] = json.loads(pref_raw) if pref_raw else []
+            except Exception:
+                # fallback: try to interpret as Python literal list or comma-separated
+                u["preferred_genders"] = []
+        elif pref_raw is None:
+            u["preferred_genders"] = []
     return users
 
 # --- Endpoints ---
@@ -123,7 +131,11 @@ def check_email():
 
     user_data = dict(user_row)
     user_data["answers"] = answers
-    user_data["preferred_genders"] = json.loads(user_data.get("preferred_genders") or "[]")
+    # ensure preferred_genders is a list
+    try:
+        user_data["preferred_genders"] = json.loads(user_data.get("preferred_genders") or "[]")
+    except Exception:
+        user_data["preferred_genders"] = []
     return jsonify({"exists": True, "user": user_data})
 
 @app.route("/api/signup", methods=["POST"])
@@ -144,7 +156,6 @@ def signup():
     cur.execute("SELECT id FROM users WHERE email = ?", (email,))
     r = cur.fetchone()
     if r:
-        # User exists: update info
         uid = r["id"]
         cur.execute("""
             UPDATE users
@@ -192,11 +203,9 @@ def submit_answers():
 
     # Convert sqlite3.Row to a dict
     row_dict = dict(row)
-
     uid = row_dict["id"]
 
-
-    # Save/update answers
+    # insert answers
     for qid_str, ans in answers.items():
         try:
             qid = int(qid_str)
@@ -206,26 +215,30 @@ def submit_answers():
             INSERT INTO answers (user_id, qid, answer)
             VALUES (?, ?, ?)
         """, (uid, qid, ans))
+
+    # normalize and store lowercase match_type
+    match_type_norm = match_type.lower() if isinstance(match_type, str) else match_type
     submitted_at = datetime.utcnow().isoformat()
-    cur.execute("UPDATE users SET match_type = ?, submitted_at = ? WHERE id = ?", (match_type, submitted_at, uid))
-    
+    cur.execute("UPDATE users SET match_type = ?, submitted_at = ? WHERE id = ?", (match_type_norm, submitted_at, uid))
+
+    # store a snapshot in user_submissions for easy export/audit
+    # ensure preferred_genders captured as string (it already is stored in users as JSON string)
     cur.execute("""
         INSERT INTO user_submissions (
             user_id, first_name, last_name, email, grade, gender, preferred_genders, match_type, submitted_at, answers
         ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     """, (
         uid,
-        row_dict["first_name"],
-        row_dict["last_name"],
-        row_dict["email"],
-        row_dict["grade"],
-        row_dict["gender"],
-        row_dict["preferred_genders"],
-        match_type,
+        row_dict.get("first_name"),
+        row_dict.get("last_name"),
+        row_dict.get("email"),
+        row_dict.get("grade"),
+        row_dict.get("gender"),
+        row_dict.get("preferred_genders"),
+        match_type_norm,
         submitted_at,
         json.dumps(answers)
     ))
-    
 
     db.commit()
     return jsonify({"ok": True, "user_id": uid})
@@ -239,71 +252,141 @@ def run_matchmaking():
     if not users:
         return jsonify({"ok": True, "results": {}})
 
+    # create uid like "user123" and normalize a few fields
     for u in users:
         u["uid"] = f"user{u['id']}"
+        # normalize match_type to lowercase string
+        if u.get("match_type"):
+            u["match_type"] = str(u["match_type"]).lower()
+        else:
+            u["match_type"] = ""
+        # normalize gender and pref list
+        u["gender"] = (u.get("gender") or "").lower()
+        pref_raw = u.get("preferred_genders") or []
+        if isinstance(pref_raw, str):
+            try:
+                pref_list = json.loads(pref_raw) if pref_raw else []
+            except Exception:
+                pref_list = []
+        elif isinstance(pref_raw, list):
+            pref_list = pref_raw
+        else:
+            pref_list = []
+        u["preferred_genders"] = [str(x).lower() for x in pref_list]
 
+    # questions set
     questions = sorted({k for u in users for k in u["answers"].keys()})
+    # if no questions, matching by Qs would break — handle gracefully later
     rows = []
     for u in users:
-        grade_int = int(u["grade"].replace("th", "").replace("rd", "").replace("st", ""))
-        row = {"id": u["uid"], "grade": grade_int, "intent": u.get("match_type")}
+        # parse grade robustly (e.g., "11th" -> 11)
+        try:
+            grade_int = int(str(u.get("grade") or "").replace("th", "").replace("rd", "").replace("st", "").replace("nd", ""))
+        except Exception:
+            # fallback to a default grade (e.g., 11) if parsing fails
+            try:
+                grade_int = int(u.get("grade"))
+            except Exception:
+                grade_int = 11
+        row = {"id": u["uid"], "grade": grade_int, "intent": u.get("match_type", "")}
+        # include answers for each question id
         for q in questions:
             row[q] = u["answers"].get(q, "")
         rows.append(row)
     df = pd.DataFrame(rows).set_index("id")
 
     ids = df.index.tolist()
-    sim_mat = pd.DataFrame(0.0, index=ids, columns=ids)
-    gender_map = {u["uid"]: u.get("gender","") for u in users}
-    pref_map = {u["uid"]: json.loads(u.get("preferred_genders") or "[]") for u in users}
+    if not ids:
+        return jsonify({"ok": True, "results": {"friends": [], "dates": [], "groups": []}})
 
+    sim_mat = pd.DataFrame(0.0, index=ids, columns=ids)
+
+    # build maps for gender and pref using u["uid"]
+    gender_map = {u["uid"]: (u.get("gender") or "").lower() for u in users}
+    pref_map = {u["uid"]: u.get("preferred_genders") or [] for u in users}
 
     def similarity_row(a_id, b_id):
         A, B = df.loc[a_id], df.loc[b_id]
-        if abs(int(A["grade"]) - int(B["grade"])) > 1:
-            return 0.0
-        if A["intent"] == "date" and B["intent"] == "date":
-            if gender_map[b_id] not in pref_map[a_id]:
+        # grade proximity
+        try:
+            if abs(int(A["grade"]) - int(B["grade"])) > 1:
                 return 0.0
+        except Exception:
+            pass
+        # if both want date, check mutual preferences (but do it against normalized maps)
+        if (str(A.get("intent") or "").lower() == "date") and (str(B.get("intent") or "").lower() == "date"):
+            ga = gender_map.get(a_id, "")
+            gb = gender_map.get(b_id, "")
+            pref_a = pref_map.get(a_id, []) or []
+            pref_b = pref_map.get(b_id, []) or []
+            # ensure all normalized strings
+            pref_a = [str(x).lower() for x in pref_a]
+            pref_b = [str(x).lower() for x in pref_b]
+            # require that each person's gender is acceptable to the other (mutual)
+            if (gb not in pref_a) or (ga not in pref_b):
+                return 0.0
+
+        # if there are zero questions, treat as perfect match for intent/grade/gender checks above
+        if not questions:
+            return 1.0
+
+        # count exact answer matches (string normalized)
         matches = sum(str(A[q]).strip() == str(B[q]).strip() for q in questions)
         return matches / len(questions) if questions else 0.0
 
-    for a,b in combinations(ids,2):
-        s = similarity_row(a,b)
-        sim_mat.loc[a,b] = s
-        sim_mat.loc[b,a] = s
+    # fill similarity matrix
+    for a, b in combinations(ids, 2):
+        s = similarity_row(a, b)
+        sim_mat.loc[a, b] = s
+        sim_mat.loc[b, a] = s
 
+    # pairing function using networkx max weight matching
     def optimal_pairing(intent_name, baseline_val=baseline):
-        subset = [i for i in ids if df.loc[i]["intent"] == intent_name]
+        subset = [i for i in ids if str(df.loc[i]["intent"]).lower() == str(intent_name).lower()]
         G = nx.Graph()
-        for a,b in combinations(subset,2):
-            score = sim_mat.loc[a,b]
+        for a, b in combinations(subset, 2):
+            score = sim_mat.loc[a, b]
             if score >= baseline_val:
-                G.add_edge(a,b,weight=score)
+                G.add_edge(a, b, weight=score)
         matching = nx.algorithms.matching.max_weight_matching(G, maxcardinality=True)
-        pairs = [{"a": a, "b": b, "score": float(sim_mat.loc[a,b])} for a,b in matching]
+        pairs = [{"a": a, "b": b, "score": float(sim_mat.loc[a, b])} for a, b in matching]
         paired_ids = {p["a"] for p in pairs} | {p["b"] for p in pairs}
         unmatched = [uid for uid in subset if uid not in paired_ids]
         return pairs, unmatched
 
+    # run friend/date pairing
     friend_pairs, unmatched_friends = optimal_pairing("friend")
     date_pairs, unmatched_dates = optimal_pairing("date")
-    group_users = [i for i in ids if df.loc[i]["intent"]=="group"] + unmatched_friends + unmatched_dates
 
-    # Form balanced groups
-    def form_groups_balanced(users, min_size=3, max_size=4):
-        if not users: return []
+    # track matched users so we don't double-assign them to groups
+    matched_users = set()
+    for p in friend_pairs + date_pairs:
+        matched_users.add(p["a"])
+        matched_users.add(p["b"])
+
+    # group users: people who asked for group and were not matched above, plus unmatched friends/dates
+    group_claims = [i for i in ids if str(df.loc[i]["intent"]).lower() == "group" and i not in matched_users]
+    # append unmatched friends and unmatched dates (those returned as unmatched by pairing)
+    group_users = group_claims + [u for u in unmatched_friends if u not in matched_users] + [u for u in unmatched_dates if u not in matched_users]
+
+    # Form balanced groups (min 3, max 4)
+    def form_groups_balanced(users_list, min_size=3, max_size=4):
+        if not users_list:
+            return []
         groups = []
-        temp = list(users)
+        temp = list(users_list)
         np.random.shuffle(temp)
+        # chunk into max_size
         while len(temp) >= max_size:
             groups.append(temp[:max_size])
             temp = temp[max_size:]
+        # handle remainder
         while temp:
             if len(temp) >= min_size:
                 groups.append(temp[:max_size])
                 temp = temp[max_size:]
             else:
+                # try to distribute remainder into existing groups that have room
                 added = False
                 for g in groups:
                     while len(g) < max_size and temp:
@@ -362,7 +445,12 @@ def get_user_by_id(user_id):
     user_data = dict(user)
     cur.execute("SELECT qid, answer FROM answers WHERE user_id = ?", (user_id,))
     user_data["answers"] = {r["qid"]: r["answer"] for r in cur.fetchall()}
+    # ensure preferred_genders is a list before returning
+    try:
+        user_data["preferred_genders"] = json.loads(user_data.get("preferred_genders") or "[]")
+    except Exception:
+        user_data["preferred_genders"] = []
     return jsonify({"ok": True, "user": user_data})
 
-if __name__ == "__main__":    
-    app.run(debug=True, host="0.0.0.0", port=int(os.environ.get("PORT",5000)))
+if __name__ == "__main__":
+    app.run(debug=True, host="0.0.0.0", port=int(os.environ.get("PORT", 5000)))
