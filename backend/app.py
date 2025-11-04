@@ -384,7 +384,7 @@ def run_matchmaking():
             n_groups = max(1, len(group_users) // 4)
             model = AgglomerativeClustering(
                 n_clusters=n_groups,
-                affinity="euclidean",
+                metric="euclidean",
                 linkage="average"
             )
             features = submat.values
