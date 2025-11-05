@@ -427,6 +427,26 @@ def run_matchmaking():
             }
         })
 
+@app.route("/api/all-users", methods=["GET"])
+def get_all_users():
+    try:
+        db = get_db()
+        cur = db.cursor()
+        cur.execute("SELECT * FROM users")
+        rows = cur.fetchall()
+
+        users = [dict(row) for row in rows]
+        # ensure preferred_genders is always a list
+        for u in users:
+            try:
+                u["preferred_genders"] = json.loads(u.get("preferred_genders") or "[]")
+            except Exception:
+                u["preferred_genders"] = []
+        return jsonify({"ok": True, "users": users})
+    except Exception as e:
+        return jsonify({"ok": False, "error": str(e)})
+
+    
 
 @app.route("/api/my-match")
 def my_match():
