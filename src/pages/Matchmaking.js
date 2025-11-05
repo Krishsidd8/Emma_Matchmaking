@@ -180,7 +180,6 @@ function Matchmaking() {
   // --- Run matchmaking ---
   const runMatchmaking = async () => {
     try {
-      // Run full matchmaking algorithm
       const matchResp = await fetch(`${API_BASE}/run-matchmaking`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -189,29 +188,20 @@ function Matchmaking() {
       const matchData = await matchResp.json();
       setMatches(matchData.results || { friends: [], dates: [], groups: [] });
 
-      // Get my specific match
       const myMatchResp = await fetch(`${API_BASE}/my-match?email=${user.email}`);
       const myMatchData = await myMatchResp.json();
 
       if (myMatchData.ok && myMatchData.match) {
-        const matchObj =
-          myMatchData.match.dates?.[0] ||
-          myMatchData.match.friends?.[0] ||
-          null;
-
-        if (matchObj) {
-          const matchedIdStr =
-            matchObj.a === `user${user.id}` ? matchObj.b : matchObj.a;
-          const matchedId = parseInt(matchedIdStr.replace("user", ""), 10);
-
-          // Fetch full info of the matched user by ID
-          const matchedUserResp = await fetch(`${API_BASE}/user/${matchedId}`);
-          const matchedUserData = await matchedUserResp.json();
-
-          if (matchedUserData.ok) {
-            setMatchedUser(matchedUserData.user);
-          }
+        if (myMatchData.match.type === "group") {
+          setGroupMembers(myMatchData.match.members.filter(m => m.email !== user.email));
+          setMatchedUser(null);
+        } else {
+          setMatchedUser(myMatchData.match);
+          setGroupMembers(null);
         }
+      } else {
+        setMatchedUser(null);
+        setGroupMembers(null);
       }
 
       setStep("reveal");
@@ -228,71 +218,52 @@ function Matchmaking() {
     <div className="content-card">
       <h2>Waiting for matchmaking...</h2>
       <Countdown
-        targetDate = "2025-11-04T16:55:00-08:00"
+        targetDate = "2025-11-04T17:10:00-08:00"
         onFinish={runMatchmaking}
       />
     </div>
   );
 
   // --- Render matches ---
-  // --- Render matches ---
-// --- Render matches ---
-const renderReveal = () => {
-  if (!matches) return <p>Loading matches...</p>;
+  const renderReveal = () => {
+    if (!matches) return <p>Loading matches...</p>;
 
-  // --- group matches ---
-  if (matches.groups && matches.groups.length > 0) {
-    const myGroup = matches.groups.find((g) =>
-      g.members.some((memberId) => {
-        const idNum = typeof memberId === "string" ? parseInt(memberId.replace("user", ""), 10) : memberId;
-        return idNum === user.id;
-      })
-    );
-
-    if (myGroup) {
-      // Filter out the logged-in user
-      const otherMembers = groupMembers?.filter((m) => m.id !== user.id) || [];
-
+    if (groupMembers && groupMembers.length > 0) {
       return (
         <div className="content-card">
           <h2>Your Group</h2>
           <p>You’ve been matched with the following members:</p>
-          {!otherMembers.length ? (
-            <p>Loading members...</p>
-          ) : (
-            <div className="scroll-container">
-              <ul className="group-member-list">
-                {otherMembers.map((member, idx) => (
-                  <li key={idx} className="member-item">
-                    <p><strong>Name:</strong> {member.first_name} {member.last_name}</p>
-                    <p><strong>Grade:</strong> {member.grade}</p>
-                    <p><strong>Email:</strong> {member.email}</p>
-                    <p><strong>Gender:</strong> {member.gender}</p>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          )}
+          <div className="scroll-container">
+            <ul className="group-member-list">
+              {groupMembers.map((member, idx) => (
+                <li key={idx} className="member-item">
+                  <p><strong>Name:</strong> {member.first_name} {member.last_name}</p>
+                  <p><strong>Grade:</strong> {member.grade}</p>
+                  <p><strong>Email:</strong> {member.email}</p>
+                  <p><strong>Gender:</strong> {member.gender}</p>
+                </li>
+              ))}
+            </ul>
+          </div>
         </div>
       );
     }
-  }
 
-  // --- single friend/date match ---
-  if (matchedUser) {
-    return (
-      <div className="content-card">
-        <h2>Your Match</h2>
-        <p><strong>Name:</strong> {matchedUser.first_name} {matchedUser.last_name}</p>
-        <p><strong>Grade:</strong> {matchedUser.grade}</p>
-        <p><strong>Email:</strong> {matchedUser.email}</p>
-        <p><strong>Gender:</strong> {matchedUser.gender}</p>
-      </div>
-    );
-  }
+    if (matchedUser) {
+      return (
+        <div className="content-card">
+          <h2>Your Match</h2>
+          <p><strong>Name:</strong> {matchedUser.first_name} {matchedUser.last_name}</p>
+          <p><strong>Grade:</strong> {matchedUser.grade}</p>
+          <p><strong>Email:</strong> {matchedUser.email}</p>
+          <p><strong>Gender:</strong> {matchedUser.gender}</p>
+        </div>
+      );
+    }
 
-  return <p>No match found.</p>;
-};
+    return <p>No match found.</p>;
+  };
+
 
 
   // --- Main content renderer ---
