@@ -228,14 +228,16 @@ function Matchmaking() {
     <div className="content-card">
       <h2>Waiting for matchmaking...</h2>
       <Countdown
-        targetDate = "2025-11-04T16:40:00-08:00"
+        targetDate = "2025-11-04T16:55:00-08:00"
         onFinish={runMatchmaking}
       />
     </div>
   );
 
   // --- Render matches ---
-  const renderReveal = () => {
+  // --- Render matches ---
+// --- Render matches ---
+const renderReveal = () => {
   if (!matches) return <p>Loading matches...</p>;
 
   // --- group matches ---
@@ -248,21 +250,28 @@ function Matchmaking() {
     );
 
     if (myGroup) {
+      // Filter out the logged-in user
+      const otherMembers = groupMembers?.filter((m) => m.id !== user.id) || [];
+
       return (
         <div className="content-card">
           <h2>Your Group</h2>
           <p>You’ve been matched with the following members:</p>
-          {!groupMembers ? <p>Loading members...</p> : (
-            <ul className="group-member-list">
-              {[user, ...groupMembers].map((member, idx) => (
-                <li key={idx} className="member-item">
-                  <p><strong>Name:</strong> {member.first_name} {member.last_name}</p>
-                  <p><strong>Grade:</strong> {member.grade}</p>
-                  <p><strong>Email:</strong> {member.email}</p>
-                  <p><strong>Gender:</strong> {member.gender}</p>
-                </li>
-              ))}
-            </ul>
+          {!otherMembers.length ? (
+            <p>Loading members...</p>
+          ) : (
+            <div className="scroll-container">
+              <ul className="group-member-list">
+                {otherMembers.map((member, idx) => (
+                  <li key={idx} className="member-item">
+                    <p><strong>Name:</strong> {member.first_name} {member.last_name}</p>
+                    <p><strong>Grade:</strong> {member.grade}</p>
+                    <p><strong>Email:</strong> {member.email}</p>
+                    <p><strong>Gender:</strong> {member.gender}</p>
+                  </li>
+                ))}
+              </ul>
+            </div>
           )}
         </div>
       );
