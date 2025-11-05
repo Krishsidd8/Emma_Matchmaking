@@ -437,28 +437,29 @@ def my_match():
     db = get_db()
     cur = db.cursor()
     user = cur.execute(
-        "SELECT id, name, intent FROM users WHERE email = ?", (email,)
+        "SELECT id, first_name, last_name, match_type FROM users WHERE email = ?", (email,)
     ).fetchone()
     if not user:
         return jsonify({"ok": False, "error": "user not found"}), 404
 
     user_id = user["id"]
-    user_intent = user["intent"]
+    user_intent = user["match_type"]
 
     match = cur.execute(
         "SELECT * FROM matches ORDER BY created_at DESC LIMIT 1"
     ).fetchone()
     if not match:
-        return jsonify({"ok": False, "match": None})
+        return jsonify({"ok": True, "match": None})
 
     data = json.loads(match["payload"])
 
-    # === handle friend/date pairings ===
+    # --- handle friend/date pairings ---
     for pair in data.get("friends", []) + data.get("dates", []):
-        if pair["a"] == user_id or pair["b"] == user_id:
-            other_id = pair["b"] if pair["a"] == user_id else pair["a"]
+        if pair["a"] == f"user{user_id}" or pair["b"] == f"user{user_id}":
+            other_id_str = pair["b"] if pair["a"] == f"user{user_id}" else pair["a"]
+            other_id = int(other_id_str.replace("user", ""))
             other = cur.execute(
-                "SELECT name, grade, email, gender, intent FROM users WHERE id = ?",
+                "SELECT first_name, last_name, grade, email, gender FROM users WHERE id = ?",
                 (other_id,),
             ).fetchone()
             if other:
@@ -466,28 +467,30 @@ def my_match():
                     "ok": True,
                     "match": {
                         "type": user_intent,
-                        "name": other["name"],
+                        "first_name": other["first_name"],
+                        "last_name": other["last_name"],
                         "grade": other["grade"],
                         "email": other["email"],
                         "gender": other["gender"],
                     },
                 })
 
-    # === handle group clusters ===
+    # --- handle group clusters ---
     for group in data.get("groups", []):
         members = group.get("members", [])
-        if user_id in members:
-            # Get all other members
-            placeholders = ",".join("?" * len(members))
+        if f"user{user_id}" in members or user_id in members:
+            # Convert member IDs to integers if needed
+            member_ids = [int(m.replace("user", "")) if isinstance(m, str) else m for m in members]
+            placeholders = ",".join("?" * len(member_ids))
             rows = cur.execute(
-                f"SELECT name, grade, email, gender FROM users WHERE id IN ({placeholders})",
-                tuple(members),
+                f"SELECT first_name, last_name, grade, email, gender FROM users WHERE id IN ({placeholders})",
+                tuple(member_ids),
             ).fetchall()
 
-            # Make sure we show everyone (including the requester)
             group_list = [
                 {
-                    "name": r["name"],
+                    "first_name": r["first_name"],
+                    "last_name": r["last_name"],
                     "grade": r["grade"],
                     "email": r["email"],
                     "gender": r["gender"],
@@ -503,8 +506,9 @@ def my_match():
                 },
             })
 
-    # === no match found ===
+    # --- no match found ---
     return jsonify({"ok": True, "match": None})
+
 
 
 @app.route("/api/user/<int:user_id>", methods=["GET"])

@@ -226,7 +226,7 @@ function Matchmaking() {
     <div className="content-card">
       <h2>Waiting for matchmaking...</h2>
       <Countdown
-        targetDate = "2025-11-04T16:00:00-08:00"
+        targetDate = "2025-11-04T16:20:00-08:00"
         onFinish={runMatchmaking}
       />
     </div>
@@ -236,43 +236,49 @@ function Matchmaking() {
   const renderReveal = () => {
     if (!matches) return <p>Loading matches...</p>;
 
-    // If it's a group match (array of members)
-    if (matches.type === "group" && Array.isArray(matches.members)) {
+    // --- group matches ---
+    if (matches.groups && matches.groups.length > 0) {
+      // check if current user is in a group
+      const myGroup = matches.groups.find((g) =>
+        g.members.some((m) => m.email === user.email)
+      );
+
+      if (myGroup) {
+        return (
+          <div className="content-card">
+            <h2>Your Group</h2>
+            <p>You’ve been matched with the following members:</p>
+            <ul className="group-member-list">
+              {myGroup.members.map((member, idx) => (
+                <li key={idx} className="member-item">
+                  <p><strong>Name:</strong> {member.first_name} {member.last_name}</p>
+                  <p><strong>Grade:</strong> {member.grade}</p>
+                  <p><strong>Email:</strong> {member.email}</p>
+                  <p><strong>Gender:</strong> {member.gender}</p>
+                </li>
+              ))}
+            </ul>
+          </div>
+        );
+      }
+    }
+
+    // --- single friend/date match ---
+    if (matchedUser) {
       return (
         <div className="content-card">
-          <h2>Your Group</h2>
-          <p>You’ve been matched with the following group members:</p>
-          <ul className="group-member-list">
-            {matches.members.map((member, idx) => (
-              <li key={idx} className="member-item">
-                <p><strong>Name:</strong> {member.first_name} {member.last_name}</p>
-                <p><strong>Grade:</strong> {member.grade}</p>
-                <p><strong>Email:</strong> {member.email}</p>
-                <p><strong>Gender:</strong> {member.gender}</p>
-              </li>
-            ))}
-          </ul>
+          <h2>Your Match</h2>
+          <p><strong>Name:</strong> {matchedUser.first_name} {matchedUser.last_name}</p>
+          <p><strong>Grade:</strong> {matchedUser.grade}</p>
+          <p><strong>Email:</strong> {matchedUser.email}</p>
+          <p><strong>Gender:</strong> {matchedUser.gender}</p>
         </div>
       );
     }
 
-    // Otherwise, show single-person match (friend/date)
-    return (
-      <div className="content-card">
-        <h2>Your Match</h2>
-        {matchedUser ? (
-          <div>
-            <p><strong>Name:</strong> {matchedUser.first_name} {matchedUser.last_name}</p>
-            <p><strong>Grade:</strong> {matchedUser.grade}</p>
-            <p><strong>Email:</strong> {matchedUser.email}</p>
-            <p><strong>Gender:</strong> {matchedUser.gender}</p>
-          </div>
-        ) : (
-          <p>No match found.</p>
-        )}
-      </div>
-    );
+    return <p>No match found.</p>;
   };
+
 
 
   // --- Main content renderer ---
