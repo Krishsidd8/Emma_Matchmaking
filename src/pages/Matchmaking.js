@@ -218,7 +218,7 @@ function Matchmaking() {
     <div className="content-card">
       <h2>Waiting for matchmaking...</h2>
       <Countdown
-        targetDate = "2025-11-04T17:10:00-08:00"
+        targetDate = "2025-11-07T18:00:00-08:00"
         onFinish={runMatchmaking}
       />
     </div>
